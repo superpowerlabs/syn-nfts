@@ -19,7 +19,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   Counters.Counter private _tokenIdTracker;
   uint256 public maxTokenId = 777;
 
-  string private _baseTokenURI = "https://blueprints.syn.city/meta/";
+  string private _baseTokenURI = "https://blueprints.syn.city/meta/synb/";
   bool private _baseTokenURIFrozen;
 
   using ECDSA for bytes32;
