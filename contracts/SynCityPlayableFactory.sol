@@ -20,7 +20,7 @@ interface ISynCityPlayable {
   function nextTokenId() external view returns (uint256);
 }
 
-contract SynCityNFTFactory is Ownable {
+contract SynCityPlayableFactory is Ownable {
   using ECDSA for bytes32;
   using SafeMath for uint256;
 
