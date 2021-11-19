@@ -12,14 +12,14 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 //import "hardhat/console.sol";
 
-contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
+contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   using Counters for Counters.Counter;
 
   Counters.Counter private _tokenIdTracker;
   uint256 public maxTokenId = 777;
 
-  string private _baseTokenURI = "https://blueprints.syn.city/meta/synb/";
+  string private _baseTokenURI = "https://blueprints.syn.city/meta/synp/";
   bool private _baseTokenURIFrozen;
 
   using ECDSA for bytes32;
@@ -31,9 +31,8 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
 
   mapping(bytes32 => bool) public usedCodes;
 
-  constructor(address validator_) ERC721("Syn City Blueprints", "SYNB") {
+  constructor() ERC721("Syn City Passes", "SYNP") {
     _tokenIdTracker.increment(); // < starts from 1
-    setValidator(validator_);
   }
 
   function setValidator(address validator_) public onlyOwner {

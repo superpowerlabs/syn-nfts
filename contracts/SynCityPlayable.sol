@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 //import "hardhat/console.sol";
 
-contract SynNFT is ERC721, ERC721Enumerable, Ownable {
+contract SynCityPlayable is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   using Counters for Counters.Counter;
 
@@ -76,7 +76,4 @@ contract SynNFT is ERC721, ERC721Enumerable, Ownable {
     return _baseTokenURI;
   }
 
-  function updateBaseURI(string memory baseTokenURI) external onlyOwner {
-    _baseTokenURI = baseTokenURI;
-  }
 }

@@ -29,18 +29,30 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
-  const synPasses = await SynCityPasses.deploy()
-  await synPasses.deployed()
-  const SynCityPassesFactory = await ethers.getContractFactory("SynCityPassesFactory")
-  const synNFTFactory = await SynCityPassesFactory.deploy()
+  const SynNFT = await ethers.getContractFactory("SynNFT")
+  const synNft = await SynNFT.deploy('Syn Blueprint', 'SYNB', 'https://blueprint.syn.city/metadata/')
+  await synNft.deployed()
+  const SynNFTFactory = await ethers.getContractFactory("SynNFTFactory")
+  const synNFTFactory = await SynNFTFactory.deploy()
   await synNFTFactory.deployed()
-  await synPasses.setValidator(process.env.VALIDATOR)
+  await synNFTFactory.setValidatorAndTreasury(process.env.VALIDATOR, process.env.TREASURY, {
+    gasLimit: 75000
+  })
+  synNft.setFactory(synNFTFactory.address)
 
+  // init factory
+
+  await synNFTFactory.init(
+      synNft.address,
+      parseInt(process.env.REMAINING_FREE_TOKENS),
+      {
+        gasLimit: 150000
+      }
+  )
 
   const addresses = {
-    SynCityPasses: synPasses.address,
-    SynCityPassesFactory: synNFTFactory.address,
+    SynNFT: synNft.address,
+    SynNFTFactory: synNFTFactory.address,
   }
 
   let result  = {}
@@ -64,9 +76,9 @@ async function saveAddresses(result, addresses) {
   await fs.ensureDir(path.resolve(__dirname, '../tmp'))
 
   // for immediate verification
-  console.log(path.resolve(__dirname, '../tmp/SynCityPassesAddress'), addresses.SynCityPasses)
-  await fs.writeFile(path.resolve(__dirname, '../tmp/SynCityPassesAddress'), addresses.SynCityPasses)
-  await fs.writeFile(path.resolve(__dirname, '../tmp/SynCityPassesFactoryAddress'), addresses.SynCityPassesFactory)
+  console.log(path.resolve(__dirname, '../tmp/SynNFTAddress'), addresses.SynNFT)
+  await fs.writeFile(path.resolve(__dirname, '../tmp/SynNFTAddress'), addresses.SynNFT)
+  await fs.writeFile(path.resolve(__dirname, '../tmp/SynNFTFactoryAddress'), addresses.SynNFTFactory)
 
   await exportABIs(Object.keys(addresses))
 }
