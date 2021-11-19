@@ -13,8 +13,6 @@ import "hardhat/console.sol";
 interface ISynCityPlayable {
   function safeMint(address to, uint256 quantity) external;
 
-  function symbol() external returns (string memory);
-
   function balanceOf(address owner) external view returns (uint256);
 
   function nextTokenId() external view returns (uint256);

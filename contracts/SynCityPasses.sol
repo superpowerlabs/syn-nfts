@@ -17,22 +17,34 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   using Counters for Counters.Counter;
 
   Counters.Counter private _tokenIdTracker;
-  uint256 public maxTokenId = 777;
 
-  string private _baseTokenURI = "https://blueprints.syn.city/meta/synp/";
+  struct Conf {
+    uint16 maxTokenId;
+    uint16[3] remaining;
+  }
+
+  Conf private _conf;
+
+  string private _baseTokenURI = "https://blueprints.syn.city/meta/SYNPASS/";
   bool private _baseTokenURIFrozen;
 
   using ECDSA for bytes32;
   using SafeMath for uint256;
 
   event ValidatorSet(address validator);
+
   address public validator;
   address public operator = 0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3;
-
   mapping(bytes32 => bool) public usedCodes;
 
-  constructor() ERC721("Syn City Passes", "SYNP") {
+  constructor() ERC721("Syn City Passes", "SYNPASS") {
     _tokenIdTracker.increment(); // < starts from 1
+    uint16[3] memory remaining = [
+      750, // alternate reality game solutions
+      8, // team treasury
+      19 // community events
+    ];
+    Conf({maxTokenId: 777, remaining: remaining});
   }
 
   function setValidator(address validator_) public onlyOwner {
@@ -54,7 +66,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function _mintToken(address to) internal {
-    require(_tokenIdTracker.current() <= maxTokenId, "distribution ended");
+    require(_tokenIdTracker.current() <= _conf.maxTokenId, "distribution ended");
     require(to != address(0), "invalid sender");
     require(balanceOf(to) == 0, "one blueprint per wallet");
     _safeMint(to, _tokenIdTracker.current());
@@ -74,10 +86,16 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     _baseTokenURIFrozen = true;
   }
 
-  function claimFreeToken(bytes32 authCode, bytes memory signature) external {
+  function claimFreeToken(
+    bytes32 authCode,
+    uint256 typeIndex,
+    bytes memory signature
+  ) external {
     require(!usedCodes[authCode], "authCode already used");
-    require(isSignedByValidator(encodeForSignature(_msgSender(), authCode), signature), "invalid signature");
+    require(_conf.remaining[typeIndex] > 0, "no more tokens in this category");
+    require(isSignedByValidator(encodeForSignature(_msgSender(), typeIndex, authCode), signature), "invalid signature");
     _mintToken(_msgSender());
+    _conf.remaining[typeIndex]--;
     usedCodes[authCode] = true;
   }
 
@@ -91,12 +109,17 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     return validator == ECDSA.recover(_hash, _signature);
   }
 
-  function encodeForSignature(address recipient, bytes32 authCode) public pure returns (bytes32) {
+  function encodeForSignature(
+    address recipient,
+    uint256 typeIndex,
+    bytes32 authCode
+  ) public pure returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(
           "\x19\x01", // EIP-191
           recipient,
+          typeIndex,
           authCode
         )
       );

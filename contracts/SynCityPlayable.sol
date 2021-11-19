@@ -17,24 +17,30 @@ contract SynCityPlayable is ERC721, ERC721Enumerable, Ownable {
 
   event FactorySet(address factory);
 
-  address public factory;
+  struct Conf {
+    address minter;
+    bool mintingEnded;
+    uint16 minCap;
+  }
+
+  Conf private _conf;
+
   Counters.Counter private _tokenIdTracker;
+  string private _baseTokenURIPrefix = "https://blueprints.syn.city/meta/";
 
-  string private _baseTokenURI;
-  uint256 private _mintStatus = 1;
-
-  modifier onlyFactory() {
-    require(factory != address(0) && _msgSender() == factory, "forbidden");
+  modifier onlyMinter() {
+    require(_conf.minter != address(0) && _conf.minter == _msgSender(), "forbidden");
     _;
   }
 
-  constructor(
-    string memory name,
-    string memory symbol,
-    string memory baseTokenURI
-  ) ERC721(name, symbol) {
-    _baseTokenURI = baseTokenURI;
+  constructor(string memory name, string memory symbol) ERC721(name, symbol) {
     _tokenIdTracker.increment(); // < starts from 1
+  }
+
+  function initConf(address minter, uint16 minCap) external onlyOwner {
+    require(minter != address(0), "minter cannot be null");
+    // minCap = 0, means that the collection cannot be capped
+    _conf = Conf({minter: minter, mintingEnded: false, minCap: minCap});
   }
 
   function _beforeTokenTransfer(
@@ -49,22 +55,18 @@ contract SynCityPlayable is ERC721, ERC721Enumerable, Ownable {
     return super.supportsInterface(interfaceId);
   }
 
-  // Initially, the factory manages the minting
-  // Later, it will be replaced by the game's contract
-  function setFactory(address factory_) external onlyOwner {
-    require(factory_ != address(0), "factory cannot be 0x0");
-    factory = factory_;
-  }
-
-  function safeMint(address to, uint256 quantity) external onlyFactory {
+  // Initially, the minting is done by the factory
+  // Later, it will be done by the game's contract
+  function safeMint(address to, uint256 quantity) external onlyMinter {
     require(to != address(0), "recipient cannot be 0x0");
+    require(!_conf.mintingEnded, "minting ended");
     for (uint256 i = 0; i < quantity; i++) {
       _safeMint(to, _tokenIdTracker.current());
       _tokenIdTracker.increment();
     }
   }
 
-  function burn(uint256 tokenId) public virtual onlyFactory {
+  function burn(uint256 tokenId) public virtual onlyMinter {
     _burn(tokenId);
   }
 
@@ -73,7 +75,17 @@ contract SynCityPlayable is ERC721, ERC721Enumerable, Ownable {
   }
 
   function _baseURI() internal view virtual override returns (string memory) {
-    return _baseTokenURI;
+    return string(abi.encodePacked(_baseTokenURIPrefix, symbol(), "/"));
   }
 
+  function updateBaseTokenURIPrefix(string memory baseTokenURIPrefix) external onlyOwner {
+    _baseTokenURIPrefix = baseTokenURIPrefix;
+  }
+
+  function endMinting() external onlyOwner {
+    // needed if we decide to cap the collection and
+    // create new collections for future items
+    require(_conf.minCap > 0 && _tokenIdTracker.current() >= _conf.minCap, "redeemable tokens still available");
+    _conf.mintingEnded = true;
+  }
 }

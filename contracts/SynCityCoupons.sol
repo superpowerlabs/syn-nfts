@@ -11,13 +11,13 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 //import "hardhat/console.sol";
 
-contract SaleCoupons is ERC721, ERC721Enumerable, Ownable {
+contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   using Counters for Counters.Counter;
 
   event SwapperSet(address swapper);
 
-  string private _baseTokenURI = "https://blueprints.syn.city/meta/sync/";
+  string private _baseTokenURI = "https://blueprints.syn.city/meta/SYNCOUPON/";
 
   address public swapper;
   Counters.Counter private _tokenIdTracker;
@@ -29,7 +29,7 @@ contract SaleCoupons is ERC721, ERC721Enumerable, Ownable {
     _;
   }
 
-  constructor(uint256 totalSupply) ERC721("Syn City Coupons", "SYNC") {
+  constructor(uint256 totalSupply) ERC721("Syn City Coupons", "SYNCOUPON") {
     _tokenIdTracker.increment();
     // < starts from 1
     _totalSupply = totalSupply;
