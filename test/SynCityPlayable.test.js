@@ -4,7 +4,7 @@ const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, increaseBl
 
 // tests to be fixed
 
-describe.skip("SynNFTFactory", function () {
+describe("SynNFTFactory", function () {
 
   let SynNFT
   let synNft

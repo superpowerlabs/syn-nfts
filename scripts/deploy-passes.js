@@ -3,6 +3,7 @@
 //
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
+require('dotenv').config()
 const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
@@ -20,89 +21,84 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  const [deployer] = await ethers.getSigners();
+  const chainId = await currentChainId()
+  const [deployer] = await ethers.getSigners()
 
   console.log(
       "Deploying contracts with the account:",
       deployer.address
   );
 
+  console.log('Current chain ID', await currentChainId())
+
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const SynNFT = await ethers.getContractFactory("SynNFT")
-  const synNft = await SynNFT.deploy('Syn Blueprint', 'SYNB', 'https://blueprint.syn.city/metadata/')
-  await synNft.deployed()
-  const SynNFTFactory = await ethers.getContractFactory("SynNFTFactory")
-  const synNFTFactory = await SynNFTFactory.deploy()
-  await synNFTFactory.deployed()
-  await synNFTFactory.setValidatorAndTreasury(process.env.VALIDATOR, process.env.TREASURY, {
-    gasLimit: 75000
-  })
-  synNft.setFactory(synNFTFactory.address)
+  const baseTokenURI = chainId === 1337
+      ? "http://localhost:7777/meta/SYNPASS/"
+      : "https://blueprints.syn.city/meta/SYNPASS/"
 
-  // init factory
+  const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
+  const nft = await SynCityPasses.deploy(baseTokenURI)
+  await nft.deployed()
+  const validator = chainId === 1337
+      ? '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' // hardhat #4
+      : process.env.VALIDATOR
 
-  await synNFTFactory.init(
-      synNft.address,
-      parseInt(process.env.REMAINING_FREE_TOKENS),
-      {
-        gasLimit: 150000
-      }
-  )
+  const operator = chainId === 1337
+      ? '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // hardhat #2
+      : process.env.OPERATOR
+
+  console.log(validator)
+
+  await nft.setValidatorAndOperator(validator, operator)
 
   const addresses = {
-    SynNFT: synNft.address,
-    SynNFTFactory: synNFTFactory.address,
+    SynCityPasses: nft.address
   }
 
-  let result  = {}
+  let result = {}
   const deployed = path.resolve(__dirname, '../export/deployed.json')
   if (fs.existsSync(deployed)) {
     result = require('../export/deployed.json')
   }
-
-  result[await currentChainId()] = addresses
+  if (!result[chainId]) {
+    result[chainId] = {}
+  }
+  result[chainId] = Object.assign(result[chainId], addresses)
 
   console.log(result)
 
-  await saveAddresses(result, addresses)
+  await fs.ensureDir(path.dirname(deployed))
+  await fs.writeFile(deployed, JSON.stringify(result, null, 2))
 
-}
+  const tmpDir = path.resolve(__dirname, '../tmp/SynCityPasses')
+  await fs.ensureDir(tmpDir)
+  await fs.writeFile(path.join(tmpDir, chainId.toString()), addresses.SynCityPasses)
 
-async function saveAddresses(result, addresses) {
-  let output = path.resolve(__dirname, '../export/deployed.json')
-  await fs.ensureDir(path.dirname(output))
-  await fs.writeFile(output, JSON.stringify(result, null, 2))
-  await fs.ensureDir(path.resolve(__dirname, '../tmp'))
+  // exports ABIs
 
-  // for immediate verification
-  console.log(path.resolve(__dirname, '../tmp/SynNFTAddress'), addresses.SynNFT)
-  await fs.writeFile(path.resolve(__dirname, '../tmp/SynNFTAddress'), addresses.SynNFT)
-  await fs.writeFile(path.resolve(__dirname, '../tmp/SynNFTFactoryAddress'), addresses.SynNFTFactory)
-
-  await exportABIs(Object.keys(addresses))
-}
-
-async function exportABIs(contracts) {
   const ABIs = {
     when: (new Date).toISOString(),
     contracts: {}
   }
 
-  for (let name of contracts) {
+  const contractsDir = await fs.readdir(path.resolve(__dirname, '../artifacts/contracts'))
+
+  for (let name of contractsDir) {
+    name = name.split('.')[0]
     let source = path.resolve(__dirname, `../artifacts/contracts/${name}.sol/${name}.json`)
     let json = require(source)
     ABIs.contracts[name] = json.abi
   }
-  fs.writeFileSync(path.resolve(__dirname, '../export/ABIs.json'), JSON.stringify(ABIs, null, 2))
+  await fs.writeFile(path.resolve(__dirname, '../export/ABIs.json'), JSON.stringify(ABIs, null, 2))
 }
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main()
-  .then(() => process.exit(0))
-  .catch(error => {
-    console.error(error);
-    process.exit(1);
-  });
+    .then(() => process.exit(0))
+    .catch(error => {
+      console.error(error);
+      process.exit(1);
+    });
 

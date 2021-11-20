@@ -16,6 +16,9 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   using Counters for Counters.Counter;
 
+  event ValidatorAndOperatorSet(address validator, address operator);
+  event BaseURIUpdated();
+
   Counters.Counter private _tokenIdTracker;
 
   struct Conf {
@@ -25,32 +28,37 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   Conf private _conf;
 
-  string private _baseTokenURI = "https://blueprints.syn.city/meta/SYNPASS/";
+  function getRemaining() external view returns (uint16[3] memory) {
+    return _conf.remaining;
+  }
+
+  string private _baseTokenURI;
   bool private _baseTokenURIFrozen;
 
   using ECDSA for bytes32;
   using SafeMath for uint256;
 
-  event ValidatorSet(address validator);
-
   address public validator;
-  address public operator = 0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3;
+  address public operator;
   mapping(bytes32 => bool) public usedCodes;
 
-  constructor() ERC721("Syn City Passes", "SYNPASS") {
+  constructor(string memory baseTokenURI) ERC721("Syn City Passes", "SYNPASS") {
     _tokenIdTracker.increment(); // < starts from 1
+    _baseTokenURI = baseTokenURI;
     uint16[3] memory remaining = [
       750, // alternate reality game solutions
       8, // team treasury
       19 // community events
     ];
-    Conf({maxTokenId: 777, remaining: remaining});
+    _conf = Conf({maxTokenId: 777, remaining: remaining});
   }
 
-  function setValidator(address validator_) public onlyOwner {
+  function setValidatorAndOperator(address validator_, address operator_) external onlyOwner {
     require(validator_ != address(0), "validator cannot be 0x0");
+    require(operator_ != address(0), "operator cannot be 0x0");
     validator = validator_;
-    emit ValidatorSet(validator);
+    operator = operator_;
+    emit ValidatorAndOperatorSet(validator, operator);
   }
 
   function _beforeTokenTransfer(
@@ -68,7 +76,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   function _mintToken(address to) internal {
     require(_tokenIdTracker.current() <= _conf.maxTokenId, "distribution ended");
     require(to != address(0), "invalid sender");
-    require(balanceOf(to) == 0, "one blueprint per wallet");
+    require(balanceOf(to) == 0, "one pass per wallet");
     _safeMint(to, _tokenIdTracker.current());
     _tokenIdTracker.increment();
   }
@@ -80,6 +88,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   function updateBaseTokenURI(string memory uri) external onlyOwner {
     require(!_baseTokenURIFrozen, "token uri has been frozen");
     _baseTokenURI = uri;
+    emit BaseURIUpdated();
   }
 
   function freezeBaseTokenURI() external onlyOwner {
@@ -93,7 +102,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   ) external {
     require(!usedCodes[authCode], "authCode already used");
     require(_conf.remaining[typeIndex] > 0, "no more tokens in this category");
-    require(isSignedByValidator(encodeForSignature(_msgSender(), typeIndex, authCode), signature), "invalid signature");
+    require(isSignedByValidator(encodeForSignature(_msgSender(), authCode, typeIndex), signature), "invalid signature");
     _mintToken(_msgSender());
     _conf.remaining[typeIndex]--;
     usedCodes[authCode] = true;
@@ -111,16 +120,16 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   function encodeForSignature(
     address recipient,
-    uint256 typeIndex,
-    bytes32 authCode
+    bytes32 authCode,
+    uint256 typeIndex
   ) public pure returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(
           "\x19\x01", // EIP-191
           recipient,
-          typeIndex,
-          authCode
+          authCode,
+          typeIndex
         )
       );
   }

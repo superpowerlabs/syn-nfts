@@ -38,16 +38,32 @@ module.exports = {
       blockGasLimit: 10000000,
     },
     localhost: {
-      url: "http://localhost:8545"
+      url: "http://localhost:8545",
+      chainId: 1337,
     },
     ethereum: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY || ''}`,
-      accounts: [process.env.OWNER_PRIVATE_KEY]
+      accounts: [process.env.OWNER_PRIVATE_KEY],
+      chainId: 1,
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY || ''}`,
+      accounts: [process.env.OWNER_PRIVATE_KEY],
+      chainId: 3,
+    },
+    bsc_testnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      gasPrice: 20000000000,
       accounts: [process.env.OWNER_PRIVATE_KEY]
-    }
+    },
+    bsc: {
+      url: "https://bsc-dataseed.binance.org/",
+      chainId: 56,
+      gasPrice: 20000000000,
+      accounts: [process.env.OWNER_PRIVATE_KEY]
+    },
+
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY
