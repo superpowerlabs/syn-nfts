@@ -75,22 +75,6 @@ async function main() {
   await fs.ensureDir(tmpDir)
   await fs.writeFile(path.join(tmpDir, chainId.toString()), addresses.SynCityPasses)
 
-  // exports ABIs
-
-  const ABIs = {
-    when: (new Date).toISOString(),
-    contracts: {}
-  }
-
-  const contractsDir = await fs.readdir(path.resolve(__dirname, '../artifacts/contracts'))
-
-  for (let name of contractsDir) {
-    name = name.split('.')[0]
-    let source = path.resolve(__dirname, `../artifacts/contracts/${name}.sol/${name}.json`)
-    let json = require(source)
-    ABIs.contracts[name] = json.abi
-  }
-  await fs.writeFile(path.resolve(__dirname, '../export/ABIs.json'), JSON.stringify(ABIs, null, 2))
 }
 
 // We recommend this pattern to be able to use async/await everywhere

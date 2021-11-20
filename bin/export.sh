@@ -7,3 +7,4 @@ npx hardhat compile
 
 node scripts/exportABIs.js
 cp export/ABIs.json ../syn-nft-app/client/config/.
+cp export/deployed.json ../syn-nft-app/client/config/.
