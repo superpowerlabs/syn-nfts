@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "hardhat/console.sol";
 
-interface ISynCityPlayable {
+interface ISynCityBlueprints {
   function safeMint(address to, uint256 quantity) external;
 
   function balanceOf(address owner) external view returns (uint256);
@@ -18,7 +18,7 @@ interface ISynCityPlayable {
   function nextTokenId() external view returns (uint256);
 }
 
-contract SynCityPlayableFactory is Ownable {
+contract SynCityBlueprintsFactory is Ownable {
   using ECDSA for bytes32;
   using SafeMath for uint256;
 
@@ -37,7 +37,7 @@ contract SynCityPlayableFactory is Ownable {
 
   // 1 word of storage in total
   struct NFTConf {
-    ISynCityPlayable nft;
+    ISynCityBlueprints nft;
     uint256 price;
     uint8 maxAllocationPerWallet;
     uint16 remainingInitialSaleAllocation; // the initial amount of tokens for sale
@@ -74,7 +74,7 @@ contract SynCityPlayableFactory is Ownable {
     uint16 remainingReservedAllocation
   ) external onlyOwner {
     require(validator != address(0) && treasury != address(0), "validator and/or treasury not set, yet");
-    ISynCityPlayable synNFT = ISynCityPlayable(nftAddress);
+    ISynCityBlueprints synNFT = ISynCityBlueprints(nftAddress);
     nftConf[nftAddress] = NFTConf({
       nft: synNFT,
       price: price,
