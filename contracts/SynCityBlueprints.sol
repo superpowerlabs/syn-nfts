@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 //import "hardhat/console.sol";
 
-contract SynCityPlayable is ERC721, ERC721Enumerable, Ownable {
+contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   using Counters for Counters.Counter;
 
