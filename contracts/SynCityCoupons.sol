@@ -22,17 +22,17 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   address public swapper;
   Counters.Counter private _tokenIdTracker;
 
-  uint256 private _totalSupply;
+  uint256 private _maxSupply;
 
   modifier onlySwapper() {
     require(swapper != address(0) && _msgSender() == swapper, "forbidden");
     _;
   }
 
-  constructor(uint256 totalSupply) ERC721("Syn City Coupons", "SYNCOUPON") {
+  constructor(uint256 maxSupply) ERC721("Syn City Coupons", "SYNCOUPON") {
     _tokenIdTracker.increment();
     // < starts from 1
-    _totalSupply = totalSupply;
+    _maxSupply = maxSupply;
   }
 
   function _beforeTokenTransfer(
@@ -55,7 +55,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
 
   function safeMint(address to, uint256 quantity) external onlyOwner {
     require(to != address(0), "recipient cannot be 0x0");
-    require(_tokenIdTracker.current() + quantity - 1 <= _totalSupply, "not enough token to be minted");
+    require(_tokenIdTracker.current() + quantity - 1 <= _maxSupply, "not enough token to be minted");
     for (uint256 i = 0; i < quantity; i++) {
       _safeMint(to, _tokenIdTracker.current());
       _tokenIdTracker.increment();
