@@ -95,6 +95,10 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     _baseTokenURIFrozen = true;
   }
 
+  function contractURI() external view returns (string memory) {
+    return _baseTokenURI;
+  }
+
   function claimFreeToken(
     bytes32 authCode,
     uint256 typeIndex,
@@ -115,7 +119,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function isSignedByValidator(bytes32 _hash, bytes memory _signature) public view returns (bool) {
-    return validator == ECDSA.recover(_hash, _signature);
+    return validator != address(0) && validator == ECDSA.recover(_hash, _signature);
   }
 
   function encodeForSignature(

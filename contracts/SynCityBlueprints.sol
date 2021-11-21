@@ -82,6 +82,10 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     _baseTokenURIPrefix = baseTokenURIPrefix;
   }
 
+  function contractURI() external view returns (string memory) {
+    return _baseTokenURI;
+  }
+
   function endMinting() external onlyOwner {
     // needed if we decide to cap the collection and
     // create new collections for future items

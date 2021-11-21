@@ -22,6 +22,7 @@ async function main() {
   // await hre.run('compile');
 
   const chainId = await currentChainId()
+  const isLocalNode = /1337$/.test(chainId)
   const [deployer] = await ethers.getSigners()
 
   console.log(
@@ -33,18 +34,18 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const baseTokenURI = chainId === 1337
-      ? "http://localhost:7777/meta/SYNPASS/"
+  const baseTokenURI = isLocalNode
+      ? "http://localhost:6660/meta/SYNPASS/"
       : "https://blueprints.syn.city/meta/SYNPASS/"
 
   const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
   const nft = await SynCityPasses.deploy(baseTokenURI)
   await nft.deployed()
-  const validator = chainId === 1337
+  const validator = isLocalNode
       ? '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' // hardhat #4
       : process.env.VALIDATOR
 
-  const operator = chainId === 1337
+  const operator = isLocalNode
       ? '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // hardhat #2
       : process.env.OPERATOR
 
