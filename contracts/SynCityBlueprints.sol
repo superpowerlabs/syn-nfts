@@ -83,7 +83,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   }
 
   function contractURI() external view returns (string memory) {
-    return _baseTokenURI;
+    return _baseURI();
   }
 
   function endMinting() external onlyOwner {
