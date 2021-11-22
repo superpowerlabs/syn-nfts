@@ -82,5 +82,4 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   function contractURI() external view returns (string memory) {
     return _baseTokenURI;
   }
-
 }

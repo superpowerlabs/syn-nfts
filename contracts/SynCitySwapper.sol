@@ -31,14 +31,18 @@ contract SynCitySwapper is Ownable {
   address public validator;
   ISynToken private _blueprint;
   ISynToken private _coupon;
-  mapping(uint => bool) private _minted;
+  mapping(uint256 => bool) private _minted;
 
   function setValidator(address validator_) public onlyOwner {
     require(validator_ != address(0), "validator cannot be 0x0");
     validator = validator_;
   }
 
-  constructor(address blueprint, address coupon, address validator_) {
+  constructor(
+    address blueprint,
+    address coupon,
+    address validator_
+  ) {
     require(blueprint != address(0), "address cannot be 0x0");
     require(coupon != address(0), "address cannot be 0x0");
     require(validator_ != address(0), "address cannot be 0x0");
@@ -47,10 +51,7 @@ contract SynCitySwapper is Ownable {
     setValidator(validator_);
   }
 
-  function claimTokenFromPass(
-    uint tokenId,
-    bytes memory signature
-  ) public {
+  function claimTokenFromPass(uint256 tokenId, bytes memory signature) public {
     require(isSignedByValidator(encodeForSignature(_msgSender(), tokenId), signature), "invalid signature");
     require(tokenId <= 777, "tokenId out of range");
     require(!_minted[tokenId], "this pass has been already used");
@@ -59,9 +60,9 @@ contract SynCitySwapper is Ownable {
   }
 
   function swapTokenFromCoupon() external onlyOwner {
-    uint balance = _coupon.balanceOf(_msgSender());
-    for (uint i = 0; i < balance; i++) {
-      uint tokenId = _coupon.tokenOfOwnerByIndex(_msgSender(), i);
+    uint256 balance = _coupon.balanceOf(_msgSender());
+    for (uint256 i = 0; i < balance; i++) {
+      uint256 tokenId = _coupon.tokenOfOwnerByIndex(_msgSender(), i);
       require(tokenId <= 7000, "tokenId out of range");
       require(!_minted[tokenId.add(777)], "this coupon has been already used");
       _minted[tokenId.add(777)] = true;
@@ -76,18 +77,14 @@ contract SynCitySwapper is Ownable {
     return validator == ECDSA.recover(_hash, _signature);
   }
 
-  function encodeForSignature(
-    address recipient,
-    uint tokenId
-  ) public pure returns (bytes32) {
+  function encodeForSignature(address recipient, uint256 tokenId) public pure returns (bytes32) {
     return
-    keccak256(
-      abi.encodePacked(
-        "\x19\x01", // EIP-191
-        recipient,
-        tokenId
-      )
-    );
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01", // EIP-191
+          recipient,
+          tokenId
+        )
+      );
   }
-
 }
