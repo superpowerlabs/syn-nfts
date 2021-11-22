@@ -44,18 +44,18 @@ async function main() {
       ? '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' // hardhat #4
       : process.env.VALIDATOR
 
-  const operator = isLocalNode
-      ? '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // hardhat #2
-      : process.env.OPERATOR
+  // const operator = isLocalNode
+  //     ? '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // hardhat #2
+  //     : process.env.OPERATOR
 
   assert.isTrue(validator.length === 42)
-  assert.isTrue(operator.length === 42)
+  // assert.isTrue(operator.length === 42)
 
   const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
-  const nft = await SynCityPasses.deploy(baseTokenURI)
+  const nft = await SynCityPasses.deploy(baseTokenURI, validator)
   await nft.deployed()
 
-  await nft.setValidatorAndOperator(validator, operator)
+  // await nft.setValidatorAndOperator(validator, operator)
 
   const addresses = {
     SynCityPasses: nft.address

@@ -16,7 +16,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   using Counters for Counters.Counter;
 
-  event ValidatorAndOperatorSet(address validator, address operator);
+  event ValidatorSet(address validator);
   event BaseURIUpdated();
 
   Counters.Counter private _tokenIdTracker;
@@ -39,10 +39,9 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   using SafeMath for uint256;
 
   address public validator;
-  address public operator;
   mapping(bytes32 => bool) public usedCodes;
 
-  constructor(string memory baseTokenURI) ERC721("Syn City Passes", "SYNPASS") {
+  constructor(string memory baseTokenURI, address _validator) ERC721("Syn City Passes", "SYNPASS") {
     _tokenIdTracker.increment(); // < starts from 1
     _baseTokenURI = baseTokenURI;
     uint16[3] memory remaining = [
@@ -51,14 +50,13 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
       19 // community events
     ];
     _conf = Conf({maxTokenId: 777, remaining: remaining});
+    setValidator(_validator);
   }
 
-  function setValidatorAndOperator(address validator_, address operator_) external onlyOwner {
+  function setValidator(address validator_) public onlyOwner {
     require(validator_ != address(0), "validator cannot be 0x0");
-    require(operator_ != address(0), "operator cannot be 0x0");
     validator = validator_;
-    operator = operator_;
-    emit ValidatorAndOperatorSet(validator, operator);
+    emit ValidatorSet(validator);
   }
 
   function _beforeTokenTransfer(
