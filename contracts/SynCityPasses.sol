@@ -16,6 +16,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   using Counters for Counters.Counter;
+  using ECDSA for bytes32;
 
   event ValidatorSet(address validator);
   event BaseURIUpdated();
@@ -29,12 +30,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   Conf private _conf;
 
-  function getRemaining() external view returns (uint16[3] memory) {
-    return _conf.remaining;
-  }
-
   string private _baseTokenURI;
-  bool private _baseTokenURIFrozen;
+  bool public tokenURIHasBeenFrozen;
 
   using ECDSA for bytes32;
   using SafeMath for uint256;
@@ -43,15 +40,19 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   mapping(bytes32 => bool) public usedCodes;
 
   constructor(string memory baseTokenURI, address _validator) ERC721("Syn City Passes", "SYNPASS") {
-    _tokenIdTracker.increment(); // < starts from 1
+    _tokenIdTracker.increment();
+    // < starts from 1
     _baseTokenURI = baseTokenURI;
-    uint16[3] memory remaining = [
-      750, // alternate reality game solutions
+    _conf = Conf({maxTokenId : 777, remaining : [
+      333, // alternate reality game solutions
       8, // team treasury
-      19 // community events
-    ];
-    _conf = Conf({maxTokenId: 777, remaining: remaining});
+      436 // community events
+      ]});
     setValidator(_validator);
+  }
+
+  function getRemaining() external view returns (uint16[3] memory) {
+    return _conf.remaining;
   }
 
   function setValidator(address validator_) public onlyOwner {
@@ -85,13 +86,13 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function updateBaseTokenURI(string memory uri) external onlyOwner {
-    require(!_baseTokenURIFrozen, "token uri has been frozen");
+    require(!tokenURIHasBeenFrozen, "token uri has been frozen");
     _baseTokenURI = uri;
     emit BaseURIUpdated();
   }
 
   function freezeBaseTokenURI() external onlyOwner {
-    _baseTokenURIFrozen = true;
+    tokenURIHasBeenFrozen = true;
   }
 
   function contractURI() external view returns (string memory) {
@@ -112,13 +113,15 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function giveawayTokens(address[] memory recipients) external onlyOwner {
+    require(_conf.remaining[2] >= recipients.length, "no more community events tokens");
     for (uint256 i = 0; i < recipients.length; i++) {
       _mintToken(recipients[i]);
     }
+    _conf.remaining[2] -= uint16(recipients.length);
   }
 
   function isSignedByValidator(bytes32 _hash, bytes memory _signature) public view returns (bool) {
-    return validator != address(0) && validator == ECDSA.recover(_hash, _signature);
+    return validator != address(0) && validator == _hash.recover(_signature);
   }
 
   function encodeForSignature(
@@ -127,13 +130,13 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     uint256 typeIndex
   ) public pure returns (bytes32) {
     return
-      keccak256(
-        abi.encodePacked(
-          "\x19\x01", // EIP-191
-          recipient,
-          authCode,
-          typeIndex
-        )
-      );
+    keccak256(
+      abi.encodePacked(
+        "\x19\x01", // EIP-191
+        recipient,
+        authCode,
+        typeIndex
+      )
+    );
   }
 }

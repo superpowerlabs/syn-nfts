@@ -2,9 +2,10 @@
 
 # SynNFT
 npx hardhat verify --show-stack-traces \
-  --network ropsten \
-  0x6eb88cD81c2BdED392489428b64fd517d744cf24 \
-  "https://blueprints.syn.city/meta/SYNPASS/"
+  --network rinkeby \
+  0xab62c34BB4041C84F65bC08741075f5fb67F5824 \
+  "https://blueprints.syn.city/meta/SYNPASS/" \
+  0x34923658675B99B2DB634cB2BC0cA8d25EdEC743
 
 ## SynNFTFactory
 #npx hardhat verify --show-stack-traces \

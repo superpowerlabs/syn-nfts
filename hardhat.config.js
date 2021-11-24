@@ -51,6 +51,11 @@ module.exports = {
       accounts: [process.env.OWNER_PRIVATE_KEY],
       chainId: 3,
     },
+    rinkeby: {
+      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY || ''}`,
+      accounts: [process.env.OWNER_PRIVATE_KEY],
+      chainId: 4,
+    },
     bsc_testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       chainId: 97,
