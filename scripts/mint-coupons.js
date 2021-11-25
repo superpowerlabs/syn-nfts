@@ -52,7 +52,7 @@ async function main() {
       }
       console.log('Minting new batch of', quantity, '...')
       await couponNft.selfSafeMint(quantity, {
-        gasLimit: 5e6
+        gasLimit: 5000000
       })
       console.log('Minted', quantity, 'tokens')
     }

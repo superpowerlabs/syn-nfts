@@ -15,7 +15,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
 
   event SwapperSet(address swapper);
 
-  string private _baseTokenURI = "https://blueprints.syn.city/meta/SYNCOUPON/";
+  string private _baseTokenURI = "https://nft.syn.city/meta/SYNBC/";
 
   address public swapper;
   bool public mintEnded;
@@ -29,7 +29,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     _;
   }
 
-  constructor(uint256 maxSupply_) ERC721("Syn City Coupons", "SYNCOUPON") {
+  constructor(uint256 maxSupply_) ERC721("Syn City Blueprint Coupons", "SYNBC") {
     // < starts from 1
     maxSupply = maxSupply_;
   }

@@ -38,12 +38,8 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const baseTokenURI = isLocalNode
-      ? "http://localhost:6660/meta/SYNCOUPON/"
-      : "https://nft.syn.city/meta/SYNCOUPON/"
-
   const SynCityCoupons = await ethers.getContractFactory("SynCityCoupons")
-  const nft = await SynCityCoupons.deploy(chainId !== 56 ? 50 : 7000)
+  const nft = await SynCityCoupons.deploy(chainId !== 56 ? 50 : 8000)
   await nft.deployed()
 
   // await nft.setMarketplace(process.env.BINANCE_ADDRESS)

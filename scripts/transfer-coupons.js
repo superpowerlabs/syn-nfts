@@ -44,10 +44,10 @@ async function main() {
   }
   let quantity = chainId === 1337 ? 20 : 40
   const maxSupply = (await couponNft.maxSupply()).toNumber()
+
   while (true) {
     const ownerBalance = (await couponNft.balanceOf(deployer.address)).toNumber()
     const balance = (await couponNft.balanceOf(process.env.BINANCE_ADDRESS)).toNumber()
-    console.log('Current transferred:', balance)
     if (balance === maxSupply) {
       console.log('Batch transfer completed')
       process.exit()
@@ -59,7 +59,7 @@ async function main() {
       }
       console.log('Transfer new batch of', quantity, '...')
       await couponNft.batchTransfer(quantity, {
-        gasLimit: 55e4
+        gasLimit: 5000000
       })
       console.log('Transferred', quantity, 'tokens')
     }

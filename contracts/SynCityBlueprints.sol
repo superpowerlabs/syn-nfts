@@ -26,14 +26,14 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   Conf private _conf;
 
   Counters.Counter private _tokenIdTracker;
-  string private _baseTokenURIPrefix = "https://blueprints.syn.city/meta/";
+  string private _baseTokenURI = "https://nft.syn.city/meta/SYNB";
 
   modifier onlyMinter() {
     require(_conf.minter != address(0) && _conf.minter == _msgSender(), "forbidden");
     _;
   }
 
-  constructor(string memory name, string memory symbol) ERC721(name, symbol) {
+  constructor() ERC721("Syn City Blueprints", "SYNB") {
     _tokenIdTracker.increment(); // < starts from 1
   }
 
@@ -75,11 +75,11 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   }
 
   function _baseURI() internal view virtual override returns (string memory) {
-    return string(abi.encodePacked(_baseTokenURIPrefix, symbol(), "/"));
+    return _baseTokenURI;
   }
 
-  function updateBaseTokenURIPrefix(string memory baseTokenURIPrefix) external onlyOwner {
-    _baseTokenURIPrefix = baseTokenURIPrefix;
+  function updateBaseURI(string memory baseTokenURI) external onlyOwner {
+    _baseTokenURI = baseTokenURI;
   }
 
   function contractURI() external view returns (string memory) {
