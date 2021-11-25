@@ -6,9 +6,7 @@ const deployed = require('../export/deployed.json')[chainId]
 
 const cmd =`npx hardhat verify --show-stack-traces \\
   --network ${network} \\
-  ${deployed.SynCityCoupons} \\
-  7000 \\
-  ${process.env.BINANCE_ADDRESS}
+  ${deployed.SynCityBlueprints}
 `
 
 console.log(cmd)
