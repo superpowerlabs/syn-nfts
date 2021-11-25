@@ -9,7 +9,6 @@ const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
 const requireOrMock = require('require-or-mock')
-const {abi: couponABI} = require('../artifacts/contracts/SynCityCoupons.sol/SynCityCoupons.json');
 const ethers = hre.ethers
 
 const deployed = requireOrMock('export/deployed.json')
@@ -37,24 +36,32 @@ async function main() {
   const couponABI = require('../artifacts/contracts/SynCityCoupons.sol/SynCityCoupons.json').abi
   const couponNft = new ethers.Contract(deployed[chainId].SynCityCoupons, couponABI, deployer)
 
+  const mintEnded = await couponNft.mintEnded()
+
+  if (!mintEnded) {
+    console.log('Minting not ended yet')
+    process.exit()
+  }
   let quantity = chainId === 1337 ? 20 : 40
   const maxSupply = (await couponNft.maxSupply()).toNumber()
-
   while (true) {
-    const balance = (await couponNft.balanceOf(deployer.address)).toNumber()
-    console.log('Current balance:', balance)
+    const ownerBalance = (await couponNft.balanceOf(deployer.address)).toNumber()
+    const balance = (await couponNft.balanceOf(process.env.BINANCE_ADDRESS)).toNumber()
+    console.log('Current transferred:', balance)
     if (balance === maxSupply) {
-      console.log('Minting completed')
+      console.log('Batch transfer completed')
       process.exit()
+    } else if (ownerBalance === 0) {
+      console.log('Owner does not have enough token')
     } else {
-      if (balance + quantity > maxSupply) {
-        quantity = maxSupply - balance
+      if (ownerBalance - quantity < 0) {
+        quantity = ownerBalance
       }
-      console.log('Minting new batch of', quantity, '...')
-      await couponNft.selfSafeMint(quantity, {
+      console.log('Transfer new batch of', quantity, '...')
+      await couponNft.batchTransfer(quantity, {
         gasLimit: 5e6
       })
-      console.log('Minted', quantity, 'tokens')
+      console.log('Transferred', quantity, 'tokens')
     }
     await new Promise(resolve => setTimeout(resolve, chainId === 1337 ? 5000 : 10000))
   }

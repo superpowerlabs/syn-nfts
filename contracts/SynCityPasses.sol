@@ -43,11 +43,14 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     _tokenIdTracker.increment();
     // < starts from 1
     _baseTokenURI = baseTokenURI;
-    _conf = Conf({maxTokenId : 777, remaining : [
-      333, // alternate reality game solutions
-      8, // team treasury
-      436 // community events
-      ]});
+    _conf = Conf({
+      maxTokenId: 777,
+      remaining: [
+        333, // alternate reality game solutions
+        8, // team treasury
+        436 // community events
+      ]
+    });
     setValidator(_validator);
   }
 
@@ -130,13 +133,13 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     uint256 typeIndex
   ) public pure returns (bytes32) {
     return
-    keccak256(
-      abi.encodePacked(
-        "\x19\x01", // EIP-191
-        recipient,
-        authCode,
-        typeIndex
-      )
-    );
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01", // EIP-191
+          recipient,
+          authCode,
+          typeIndex
+        )
+      );
   }
 }

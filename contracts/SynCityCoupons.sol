@@ -18,8 +18,10 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   string private _baseTokenURI = "https://blueprints.syn.city/meta/SYNCOUPON/";
 
   address public swapper;
+  bool public mintEnded;
+  bool public transferEnded;
 
-  uint256 private _maxSupply;
+  uint256 public maxSupply;
   address public marketplace;
 
   modifier onlySwapper() {
@@ -27,9 +29,12 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     _;
   }
 
-  constructor(uint256 maxSupply, address _marketplace) ERC721("Syn City Coupons", "SYNCOUPON") {
+  constructor(uint256 maxSupply_) ERC721("Syn City Coupons", "SYNCOUPON") {
     // < starts from 1
-    _maxSupply = maxSupply;
+    maxSupply = maxSupply_;
+  }
+
+  function setMarketplace(address _marketplace) external {
     require(_marketplace != address(0), "_marketplace cannot be 0x0");
     marketplace = _marketplace;
   }
@@ -52,11 +57,28 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     swapper = swapper_;
   }
 
-  function safeMint(uint256 quantity) external onlyOwner {
-    uint nextId = balanceOf(marketplace) + 1;
-    require(nextId + quantity - 1 <= _maxSupply, "not enough token to be minted");
+  function selfSafeMint(uint256 quantity) external onlyOwner {
+    require(!mintEnded, "minting ended");
+    uint256 nextId = balanceOf(owner()) + 1;
+    require(nextId + quantity - 1 <= maxSupply, "not enough token to be minted");
     for (uint256 i = 0; i < quantity; i++) {
-      _safeMint(marketplace, nextId++);
+      _safeMint(owner(), nextId++);
+    }
+    if (nextId > maxSupply) {
+      mintEnded = true;
+    }
+  }
+
+  function batchTransfer(uint256 quantity) external onlyOwner {
+    require(mintEnded, "minting not ended yet");
+    require(!transferEnded, "batch transfer ended");
+    require(balanceOf(owner()) - quantity >= 0, "not enough token to be transferred");
+    for (uint256 i = 0; i < quantity; i++) {
+      uint256 tokenId = tokenOfOwnerByIndex(owner(), 0);
+      safeTransferFrom(owner(), marketplace, tokenId, "");
+    }
+    if (balanceOf(marketplace) == maxSupply) {
+      transferEnded = true;
     }
   }
 

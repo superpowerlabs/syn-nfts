@@ -43,10 +43,10 @@ async function main() {
       : "https://nft.syn.city/meta/SYNCOUPON/"
 
   const SynCityCoupons = await ethers.getContractFactory("SynCityCoupons")
-  const nft = await SynCityCoupons.deploy(7000, process.env.BINANCE_ADDRESS)
+  const nft = await SynCityCoupons.deploy(chainId !== 56 ? 50 : 7000)
   await nft.deployed()
 
-  // await nft.setValidatorAndOperator(validator, operator)
+  // await nft.setMarketplace(process.env.BINANCE_ADDRESS)
 
   const addresses = {
     SynCityCoupons: nft.address
