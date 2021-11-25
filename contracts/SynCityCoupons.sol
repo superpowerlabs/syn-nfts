@@ -7,32 +7,31 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 //import "hardhat/console.sol";
 
 contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
-  using Counters for Counters.Counter;
 
   event SwapperSet(address swapper);
 
   string private _baseTokenURI = "https://blueprints.syn.city/meta/SYNCOUPON/";
 
   address public swapper;
-  Counters.Counter private _tokenIdTracker;
 
   uint256 private _maxSupply;
+  address public marketplace;
 
   modifier onlySwapper() {
     require(swapper != address(0) && _msgSender() == swapper, "forbidden");
     _;
   }
 
-  constructor(uint256 maxSupply) ERC721("Syn City Coupons", "SYNCOUPON") {
-    _tokenIdTracker.increment();
+  constructor(uint256 maxSupply, address _marketplace) ERC721("Syn City Coupons", "SYNCOUPON") {
     // < starts from 1
     _maxSupply = maxSupply;
+    require(_marketplace != address(0), "_marketplace cannot be 0x0");
+    marketplace = _marketplace;
   }
 
   function _beforeTokenTransfer(
@@ -53,22 +52,17 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     swapper = swapper_;
   }
 
-  function safeMint(address to, uint256 quantity) external onlyOwner {
-    require(to != address(0), "recipient cannot be 0x0");
-    require(_tokenIdTracker.current() + quantity - 1 <= _maxSupply, "not enough token to be minted");
+  function safeMint(uint256 quantity) external onlyOwner {
+    uint nextId = balanceOf(marketplace) + 1;
+    require(nextId + quantity - 1 <= _maxSupply, "not enough token to be minted");
     for (uint256 i = 0; i < quantity; i++) {
-      _safeMint(to, _tokenIdTracker.current());
-      _tokenIdTracker.increment();
+      _safeMint(marketplace, nextId++);
     }
   }
 
   // swapping, the coupon will be burned
   function burn(uint256 tokenId) public virtual onlySwapper {
     _burn(tokenId);
-  }
-
-  function nextTokenId() external view returns (uint256) {
-    return _tokenIdTracker.current();
   }
 
   function _baseURI() internal view virtual override returns (string memory) {

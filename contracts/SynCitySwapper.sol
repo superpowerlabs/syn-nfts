@@ -74,7 +74,7 @@ contract SynCitySwapper is Ownable {
   // cryptography
 
   function isSignedByValidator(bytes32 _hash, bytes memory _signature) public view returns (bool) {
-    return validator == ECDSA.recover(_hash, _signature);
+    return validator == _hash.recover(_signature);
   }
 
   function encodeForSignature(address recipient, uint256 tokenId) public pure returns (bytes32) {

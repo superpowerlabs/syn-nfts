@@ -8,7 +8,9 @@ const {assert} = require("chai")
 const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
+const requireOrMock = require('require-or-mock');
 const ethers = hre.ethers
+const deployed = requireOrMock('export/deployed.json')
 
 async function currentChainId() {
   return (await ethers.provider.getNetwork()).chainId
@@ -61,20 +63,17 @@ async function main() {
     SynCityPasses: nft.address
   }
 
-  let result = {}
-  const deployed = path.resolve(__dirname, '../export/deployed.json')
-  if (fs.existsSync(deployed)) {
-    result = require('../export/deployed.json')
-  }
-  if (!result[chainId]) {
-    result[chainId] = {}
-  }
-  result[chainId] = Object.assign(result[chainId], addresses)
 
-  console.log(result)
+  if (!deployed[chainId]) {
+    deployed[chainId] = {}
+  }
+  deployed[chainId] = Object.assign(deployed[chainId], addresses)
 
-  await fs.ensureDir(path.dirname(deployed))
-  await fs.writeFile(deployed, JSON.stringify(result, null, 2))
+  console.log(deployed)
+
+  const deployedJson = path.resolve(__dirname, '../export/deployed.json')
+  await fs.ensureDir(path.dirname(deployedJson))
+  await fs.writeFile(deployedJson, JSON.stringify(deployed, null, 2))
 
   const tmpDir = path.resolve(__dirname, '../tmp/SynCityPasses')
   await fs.ensureDir(tmpDir)

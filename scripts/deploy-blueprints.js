@@ -8,7 +8,7 @@ const {assert} = require("chai")
 const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
-const requireOrMock = require('require-or-mock');
+const requireOrMock = require('require-or-mock')
 const ethers = hre.ethers
 
 const deployed = requireOrMock('export/deployed.json')
@@ -16,6 +16,7 @@ const deployed = requireOrMock('export/deployed.json')
 async function currentChainId() {
   return (await ethers.provider.getNetwork()).chainId
 }
+
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -29,28 +30,50 @@ async function main() {
   const isLocalNode = /1337$/.test(chainId)
   const [deployer] = await ethers.getSigners()
 
-  console.log(
-      "Deploying contracts with the account:",
-      deployer.address
-  );
+  if (!deployed[chainId].SynCityCoupons) {
+    console.error('It looks like SynCityCoupons has not been deployed on this network')
+    process.exit(1)
+  }
+
+  const couponABI = require('../artifacts/contracts/SynCityCoupons.sol/SynCityCoupons.json').abi
+
+  const couponNft = new ethers.Contract(deployed[chainId].SynCityCoupons, couponABI, deployer)
+
+  console.log("Deploying contracts with the account:", deployer.address)
 
   console.log('Current chain ID', await currentChainId())
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
   const baseTokenURI = isLocalNode
-      ? "http://localhost:6660/meta/SYNCOUPON/"
-      : "https://nft.syn.city/meta/SYNCOUPON/"
+      ? "http://localhost:6660/meta/SYNB0/"
+      : "https://nft.syn.city/meta/SYNB0/"
 
-  const SynCityCoupons = await ethers.getContractFactory("SynCityCoupons")
-  const nft = await SynCityCoupons.deploy(7000, process.env.BINANCE_ADDRESS)
+  const validator = isLocalNode
+      ? '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' // hardhat #4
+      : process.env.VALIDATOR
+
+  assert.isTrue(validator.length === 42)
+
+  const SynCityBlueprints = await ethers.getContractFactory("SynCityBlueprints")
+  const nft = await SynCityBlueprints.deploy('Syn City Blueprints', 'SYNB0')
   await nft.deployed()
 
-  // await nft.setValidatorAndOperator(validator, operator)
-
   const addresses = {
-    SynCityCoupons: nft.address
+    SynCityBlueprints: nft.address
   }
+
+  const SynCitySwapper = await ethers.getContractFactory("SynCitySwapper")
+  const swapper = await SynCitySwapper.deploy(
+      addresses.SynCityBlueprints,
+      deployed[chainId].SynCityCoupons,
+      validator
+  )
+  await swapper.deployed()
+
+  addresses.SynCitySwapper = swapper.address
+
+  await couponNft.setSwapper(swapper.address)
 
   if (!deployed[chainId]) {
     deployed[chainId] = {}
@@ -63,9 +86,9 @@ async function main() {
   await fs.ensureDir(path.dirname(deployedJson))
   await fs.writeFile(deployedJson, JSON.stringify(deployed, null, 2))
 
-  const tmpDir = path.resolve(__dirname, '../tmp/SynCityCoupons')
+  const tmpDir = path.resolve(__dirname, '../tmp/SynCityBlueprints')
   await fs.ensureDir(tmpDir)
-  await fs.writeFile(path.join(tmpDir, chainId.toString()), addresses.SynCityCoupons)
+  await fs.writeFile(path.join(tmpDir, chainId.toString()), addresses.SynCityBlueprints)
 
 }
 
