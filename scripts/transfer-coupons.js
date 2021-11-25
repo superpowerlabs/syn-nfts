@@ -59,7 +59,7 @@ async function main() {
       }
       console.log('Transfer new batch of', quantity, '...')
       await couponNft.batchTransfer(quantity, {
-        gasLimit: 5e6
+        gasLimit: 55e4
       })
       console.log('Transferred', quantity, 'tokens')
     }
