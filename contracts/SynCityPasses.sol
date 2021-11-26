@@ -39,6 +39,10 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     _;
   }
 
+  address[] public team = [
+    0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3 // Devansh
+  ];
+
   constructor(
     uint256 _maxTokenId,
     address _validator,
@@ -47,6 +51,9 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     maxTokenId = _maxTokenId;
     setValidator(_validator);
     setOperator(_operator);
+    for (uint256 i = 0; i < team.length; i++) {
+      _safeMint(team[i], nextTokenId++);
+    }
   }
 
   function getRemaining(uint256 typeIndex) external view returns (uint256) {

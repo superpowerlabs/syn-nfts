@@ -36,6 +36,11 @@ async function main() {
   const couponABI = require('../artifacts/contracts/SynCityCoupons.sol/SynCityCoupons.json').abi
   const couponNft = new ethers.Contract(deployed[chainId].SynCityCoupons, couponABI, deployer)
 
+  if (!process.env.BINANCE_ADDRESS) {
+    console.log('Marketplace address not found')
+    process.exit()
+  }
+
   console.log('Setting marketplace...')
 
   await couponNft.setMarketplace(process.env.BINANCE_ADDRESS)
