@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 // Author: Francesco Sullo <francesco@sullo.co>
-// Forked from EverDragons2(.com)'s code
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // Author: Francesco Sullo <francesco@sullo.co>
-// Forked from EverDragons2(.com)'s code
+// Cryptography forked from EverDragons2(.com)'s code
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -22,7 +22,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   uint256 public nextTokenId = 1;
   uint256 public maxTokenId;
-  mapping(uint256 => uint256) public remaining;
+  uint256[] public remaining = [200, 200, 200, 200, 80];
 
   string private _baseTokenURI = "https://nft.syn.city/meta/SYNP/";
   bool public tokenURIHasBeenFrozen;
@@ -40,7 +40,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   address[] public team = [
-    0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3 // Devansh
+    0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3, // Devansh
+    0x70f41fE744657DF9cC5BD317C58D3e7928e22E1B // Francesco
   ];
 
   constructor(
@@ -70,12 +71,6 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     require(operator_ != address(0), "operator cannot be 0x0");
     operator = operator_;
     emit OperatorSet(operator);
-  }
-
-  function setSeason(uint256 typeIndex, uint256 supply) external onlyOperator {
-    require(remaining[typeIndex] == 0, "season already set");
-    // the 1 will avoid resetting a season
-    remaining[typeIndex] = supply + 1;
   }
 
   function _beforeTokenTransfer(
@@ -119,10 +114,9 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   function giveawayToken(
     address to,
     bytes32 authCode,
-    uint256 typeIndex,
     bytes memory signature
   ) external onlyOperator {
-    _mintToken(to, authCode, typeIndex, signature);
+    _mintToken(to, authCode, 4, signature);
   }
 
   function _mintToken(

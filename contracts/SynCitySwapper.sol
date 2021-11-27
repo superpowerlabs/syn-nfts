@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // Author: Francesco Sullo <francesco@sullo.co>
-// Forked from EverDragons2(.com)'s code
+// Cryptography forked from EverDragons2(.com)'s code
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
