@@ -126,6 +126,14 @@ describe("Integration test", function () {
       assert.equal((await nft.totalSupply()).toNumber(), 14)
       assert.equal(await nft.ownerOf(1), '0x70f41fE744657DF9cC5BD317C58D3e7928e22E1B')
 
+      authCode = ethers.utils.id('b' + Math.random())
+      hash = await nft.encodeForSignature(collector1.address, authCode, 2)
+      signature = await signPackedData(hash)
+
+      await assertThrowsMessage(
+          nft.connect(collector1).claimFreeToken(authCode, 2, signature),
+          'no more tokens for this season'
+      )
 
     })
 

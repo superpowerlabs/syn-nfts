@@ -92,7 +92,7 @@ describe("SynCityPasses", function () {
       hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
       signature = await signPackedData(hash)
 
-      assertThrowsMessage(
+      await assertThrowsMessage(
           nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
           'one pass per wallet'
       )
@@ -108,7 +108,7 @@ describe("SynCityPasses", function () {
 
       await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
 
-      assertThrowsMessage(
+      await assertThrowsMessage(
           nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
           'authCode already used'
       )

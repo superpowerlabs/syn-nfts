@@ -143,7 +143,7 @@ contract SynCityPassesMock is ERC721, ERC721Enumerable, Ownable {
     require(to != address(0), "invalid sender");
     require(usedCodes[authCode] == address(0), "authCode already used");
     require(balanceOf(to) == 0, "one pass per wallet");
-    require(_remaining[typeIndex] > 0, "no more tokens in this category");
+    require(_remaining[typeIndex] > 0, "no more tokens for this season");
     require(_isSignedByValidator(encodeForSignature(to, authCode, typeIndex), signature), "invalid signature");
     require(nextTokenId <= maxTokenId, "distribution ended");
     usedCodes[authCode] = to;
