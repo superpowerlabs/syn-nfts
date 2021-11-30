@@ -51,10 +51,14 @@ async function main() {
         quantity = maxSupply - balance
       }
       console.log('Minting new batch of', quantity, '...')
-      await couponNft.selfSafeMint(quantity, {
-        gasLimit: 5000000
-      })
-      console.log('Minted', quantity, 'tokens')
+      try {
+        await (await couponNft.selfSafeMint(quantity, {
+          gasLimit: 5000000
+        })).wait()
+        console.log('Minted', quantity, 'tokens')
+      } catch(e) {
+        console.log('Transaction failed. Trying again')
+      }
     }
     await new Promise(resolve => setTimeout(resolve, chainId === 1337 ? 5000 : 10000))
   }

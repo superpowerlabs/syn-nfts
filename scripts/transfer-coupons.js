@@ -60,11 +60,16 @@ async function main() {
       if (ownerBalance - quantity < 0) {
         quantity = ownerBalance
       }
-      console.log('Transfer new batch of', quantity, '...')
-      await couponNft.batchTransfer(quantity, {
-        gasLimit: 5000000
-      })
-      console.log('Transferred', quantity, 'tokens')
+      console.log('Owner balance:', ownerBalance)
+      try {
+        await (await couponNft.batchTransfer(quantity, {
+          gasLimit: 5000000
+        })).wait()
+        console.log('Transferred', quantity, 'tokens')
+      } catch (e) {
+        console.log('Transaction failed. Trying again')
+      }
+
     }
     await new Promise(resolve => setTimeout(resolve, chainId === 1337 ? 5000 : 10000))
   }

@@ -4,7 +4,7 @@ const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, increaseBl
 
 // tests to be fixed
 
-describe("SynNFTFactory", function () {
+describe("SynCityPasses", function () {
 
   let SynCityPasses
   let nft
@@ -32,9 +32,10 @@ describe("SynNFTFactory", function () {
 
   async function initAndDeploy() {
     SynCityPasses = await ethers.getContractFactory("SynCityPasses")
-    nft = await SynCityPasses.deploy('https://some.io/meta/', validator.address)
+    nft = await SynCityPasses.deploy(validator.address)
     await nft.deployed()
     nftAddress = nft.address
+    await nft.setOperators([operator.address])
   }
 
   async function configure() {
@@ -48,7 +49,7 @@ describe("SynNFTFactory", function () {
 
 
     it("should return the SynCityPasses address", async function () {
-      expect(await nft.validator()).to.equal(validator.address)
+      await expect(await nft.validator()).to.equal(validator.address)
     })
 
 
@@ -60,19 +61,83 @@ describe("SynNFTFactory", function () {
       await initAndDeploy()
     })
 
-    it("should communityMenber1 mint 1 free token", async function () {
+    it("should communityMenber1 mint a free token", async function () {
 
       const authCode = ethers.utils.id('a' + Math.random())
 
       const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
       const signature = await signPackedData(hash)
 
-      expect(await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature))
+      await expect(await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature))
           .to.emit(nft, 'Transfer')
-          .withArgs(addr0, communityMenber1.address, 1)
+          .withArgs(addr0, communityMenber1.address, 9)
 
-      const remaining = await nft.getRemaining()
-      expect(remaining[0], 749)
+      assert(await nft.usedCodes(authCode), communityMenber1.address)
+
+      const remaining = await nft.getRemaining(0)
+      expect(remaining, 199)
+
+    })
+
+    it("should throw trying to mint 2 token same wallet", async function () {
+
+      let authCode = ethers.utils.id('a' + Math.random())
+
+      let hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      let signature = await signPackedData(hash)
+
+      await expect(await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature))
+
+      authCode = ethers.utils.id('b' + Math.random())
+      hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      signature = await signPackedData(hash)
+
+      assertThrowsMessage(
+          nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
+          'one pass per wallet'
+      )
+
+    })
+
+    it("should throw trying to reuse same code", async function () {
+
+      let authCode = ethers.utils.id('a' + Math.random())
+
+      let hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      let signature = await signPackedData(hash)
+
+      await expect(await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature))
+
+      assertThrowsMessage(
+          nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
+          'authCode already used'
+      )
+
+    })
+
+  })
+
+  describe('#giveawayToken', async function () {
+
+    beforeEach(async function () {
+      await initAndDeploy()
+    })
+
+    it("should give a token to communityMember1", async function () {
+
+      const authCode = ethers.utils.id('a' + Math.random())
+
+      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 4)
+      const signature = await signPackedData(hash)
+
+      await expect(await nft.connect(operator).giveawayToken(communityMenber1.address, authCode, signature))
+          .to.emit(nft, 'Transfer')
+          .withArgs(addr0, communityMenber1.address, 9)
+
+      assert(await nft.usedCodes(authCode), communityMenber1.address)
+
+      const remaining = await nft.getRemaining(4)
+      expect(remaining, 79)
 
     })
 

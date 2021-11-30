@@ -24,8 +24,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   event BaseURIFrozen();
 
   uint256 public nextTokenId = 1;
-  uint256 public maxTokenId;
-  uint256[] public remaining = [200, 200, 200, 200, 80];
+  uint256 public maxTokenId = 888;
+  uint256[] private _remaining = [200, 200, 200, 200, 80];
 
   string private _baseTokenURI = "https://nft.syn.city/meta/SYNP/";
   bool public tokenURIHasBeenFrozen;
@@ -43,17 +43,17 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   address[] public team = [
-    // length must be 8
     0x70f41fE744657DF9cC5BD317C58D3e7928e22E1B,
     0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3,
-    0xe360cDb9B5348DB79CD630d0D1DE854b44638C64
+    0xe360cDb9B5348DB79CD630d0D1DE854b44638C64,
+    0xE14615C5B0d4f262153343e1590f196DCd52164e,
+    0x777eFBFd78D38Acd0753ef2eBe7cdA620C0f409a,
+    0xca17b266C872aAa553d2fC2e13187EcE3e2Bc54a,
+    0xE73B2AEB8A9f360FB16F7D8Df721B1b40076Aa5E,
+    0x231540a54823De2EFC7631E40A5DD9dD2Ee965bc
   ];
 
-  constructor(
-    uint256 _maxTokenId,
-    address _validator
-  ) ERC721("Syn City Genesis Passes", "SYNP") {
-    maxTokenId = _maxTokenId;
+  constructor(address _validator) ERC721("Syn City Genesis Passes", "SYNP") {
     setValidator(_validator);
     for (uint256 i = 0; i < team.length; i++) {
       _safeMint(team[i], nextTokenId++);
@@ -61,7 +61,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function getRemaining(uint256 typeIndex) external view returns (uint256) {
-    return remaining[typeIndex];
+    return _remaining[typeIndex];
   }
 
   function setValidator(address validator_) public onlyOwner {
@@ -71,7 +71,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function setOperators(address[] memory _operators) public onlyOwner {
-    for (uint j=0;j<_operators.length; j++) {
+    for (uint256 j = 0; j < _operators.length; j++) {
       require(_operators[j] != address(0), "operator cannot be 0x0");
       operators[_operators[j]] = true;
       emit OperatorSet(_operators[j]);
@@ -108,7 +108,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function freezeBaseTokenURI() external onlyOwner {
-    tokenURIHasBeenFrozen = true; emit BaseURIFrozen();
+    tokenURIHasBeenFrozen = true;
+    emit BaseURIFrozen();
   }
 
   function contractURI() external view returns (string memory) {
@@ -138,13 +139,13 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     bytes memory signature
   ) internal {
     require(to != address(0), "invalid sender");
-    require(balanceOf(to) == 0, "one pass per wallet");
     require(usedCodes[authCode] == address(0), "authCode already used");
-    require(remaining[typeIndex] > 1, "no more tokens in this category");
+    require(balanceOf(to) == 0, "one pass per wallet");
+    require(_remaining[typeIndex] > 1, "no more tokens in this category");
     require(_isSignedByValidator(encodeForSignature(to, authCode, typeIndex), signature), "invalid signature");
     require(nextTokenId <= maxTokenId, "distribution ended");
     usedCodes[authCode] = to;
-    remaining[typeIndex]--;
+    _remaining[typeIndex]--;
     _safeMint(to, nextTokenId++);
   }
 

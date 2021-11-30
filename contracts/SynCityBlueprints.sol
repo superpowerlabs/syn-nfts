@@ -44,7 +44,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   function initConf(address minter, uint16 minCap) external onlyOwner {
     require(minter != address(0), "minter cannot be null");
     // minCap = 0, means that the collection cannot be capped
-    _conf = Conf({minter : minter, mintingEnded : false, minCap : minCap});
+    _conf = Conf({minter: minter, mintingEnded: false, minCap: minCap});
     emit ConfInitialized(minter, minCap);
   }
 
@@ -68,7 +68,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     require(to != address(0), "recipient cannot be 0x0");
     require(!_conf.mintingEnded, "minting ended");
     for (uint256 i = 0; i < quantity; i++) {
-      uint tokenId = _tokenIdTracker.current();
+      uint256 tokenId = _tokenIdTracker.current();
       _tokenIdTracker.increment();
       _safeMint(to, tokenId);
     }
@@ -97,7 +97,8 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
 
   function endMinting() external onlyOwner {
     // needed if we decide to cap the collection and
-    // create new collections for future items
+    // create new collections for future items.
+    // TODO: decide if forcing the cap, leaving some coupon unswapped or not
     require(_conf.minCap > 0 && _tokenIdTracker.current() >= _conf.minCap, "redeemable tokens still available");
     _conf.mintingEnded = true;
     emit MintingEnded();

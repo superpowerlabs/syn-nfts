@@ -11,13 +11,15 @@ const Helpers = {
     try {
       await promise
       notThrowing = true
-      console.error('Returned:', message)
+      console.error('Not throwing instead of:', message)
       assert.isTrue(false)
     } catch (e) {
-      if (notThrowing) {
+      const rightMessage = e.message.indexOf(message) > -1
+      if (!rightMessage && !notThrowing) {
         console.error('Expected:', message)
+        console.error('Returned:', e.message)
       }
-      assert.isTrue(e.message.indexOf(message) > -1)
+      assert.isTrue(rightMessage)
     }
   },
 

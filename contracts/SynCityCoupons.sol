@@ -75,7 +75,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   function batchTransfer(uint256 quantity) external onlyOwner {
     require(mintEnded, "minting not ended yet");
     require(!transferEnded, "batch transfer ended");
-    uint tokenId = balanceOf(owner());
+    uint256 tokenId = balanceOf(owner());
     require(tokenId - quantity >= 0, "not enough token to be transferred");
     for (uint256 i = 0; i < quantity; i++) {
       safeTransferFrom(owner(), depositAddress, tokenId--, "");
@@ -98,5 +98,4 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     _baseTokenURI = baseTokenURI;
     emit BaseTokenURIUpdated(baseTokenURI);
   }
-
 }
