@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Author: Francesco Sullo <francesco@sullo.co>
-// Cryptography forked from EverDragons2(.com)'s code
+// Author: Francesco Sullo <francesco@superpower.io>
+// Superpower Labs / Syn City
+// Cryptography forked from Everdragons2(.com)'s code
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -36,6 +37,7 @@ contract SynCitySwapper is Ownable {
   function setValidator(address validator_) public onlyOwner {
     require(validator_ != address(0), "validator cannot be 0x0");
     validator = validator_;
+    emit ValidatorSet(validator);
   }
 
   constructor(
@@ -52,7 +54,7 @@ contract SynCitySwapper is Ownable {
   }
 
   function claimTokenFromPass(uint256 tokenId, bytes memory signature) public {
-    require(isSignedByValidator(encodeForSignature(_msgSender(), tokenId), signature), "invalid signature");
+    require(_isSignedByValidator(encodeForSignature(_msgSender(), tokenId), signature), "invalid signature");
     require(tokenId <= 777, "tokenId out of range");
     require(!_minted[tokenId], "this pass has been already used");
     _minted[tokenId] = true;
@@ -73,10 +75,12 @@ contract SynCitySwapper is Ownable {
 
   // cryptography
 
-  function isSignedByValidator(bytes32 _hash, bytes memory _signature) public view returns (bool) {
+  function _isSignedByValidator(bytes32 _hash, bytes memory _signature) private view returns (bool) {
     return validator == _hash.recover(_signature);
   }
 
+  // called internally by claimTokenFromPass
+  // and externally from the web3 app
   function encodeForSignature(address recipient, uint256 tokenId) public pure returns (bytes32) {
     return
       keccak256(

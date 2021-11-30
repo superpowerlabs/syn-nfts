@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Author: Francesco Sullo <francesco@sullo.co>
+// Author: Francesco Sullo <francesco@superpower.io>
+// Superpower Labs / Syn City
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -15,6 +16,9 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   using Counters for Counters.Counter;
 
   event FactorySet(address factory);
+  event ConfInitialized(address minter, uint16 minCap);
+  event BaseURIUpdated(string baseTokenURI);
+  event MintingEnded();
 
   struct Conf {
     address minter;
@@ -33,15 +37,18 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   }
 
   constructor() ERC721("Syn City Genesis Blueprints", "SYNB") {
-    _tokenIdTracker.increment(); // < starts from 1
+    _tokenIdTracker.increment();
+    // < starts from 1
   }
 
   function initConf(address minter, uint16 minCap) external onlyOwner {
     require(minter != address(0), "minter cannot be null");
     // minCap = 0, means that the collection cannot be capped
-    _conf = Conf({minter: minter, mintingEnded: false, minCap: minCap});
+    _conf = Conf({minter : minter, mintingEnded : false, minCap : minCap});
+    emit ConfInitialized(minter, minCap);
   }
 
+  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
   function _beforeTokenTransfer(
     address from,
     address to,
@@ -50,6 +57,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     super._beforeTokenTransfer(from, to, tokenId);
   }
 
+  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
   function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
@@ -60,8 +68,9 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     require(to != address(0), "recipient cannot be 0x0");
     require(!_conf.mintingEnded, "minting ended");
     for (uint256 i = 0; i < quantity; i++) {
-      _safeMint(to, _tokenIdTracker.current());
+      uint tokenId = _tokenIdTracker.current();
       _tokenIdTracker.increment();
+      _safeMint(to, tokenId);
     }
   }
 
@@ -79,6 +88,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
 
   function updateBaseURI(string memory baseTokenURI) external onlyOwner {
     _baseTokenURI = baseTokenURI;
+    emit BaseURIUpdated(baseTokenURI);
   }
 
   function contractURI() external view returns (string memory) {
@@ -90,5 +100,6 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     // create new collections for future items
     require(_conf.minCap > 0 && _tokenIdTracker.current() >= _conf.minCap, "redeemable tokens still available");
     _conf.mintingEnded = true;
+    emit MintingEnded();
   }
 }

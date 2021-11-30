@@ -47,9 +47,6 @@ async function main() {
   const maxSupply = (await couponNft.maxSupply()).toNumber()
 
   const target = chainId === 1337 ? marketplace.address : process.env.BINANCE_ADDRESS
-  await expect (await couponNft.setMarketplace(target))
-      .to.emit(couponNft, 'MarketplaceSet')
-      .withArgs(target)
 
   while (true) {
     const ownerBalance = (await couponNft.balanceOf(deployer.address)).toNumber()

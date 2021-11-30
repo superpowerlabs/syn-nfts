@@ -4,7 +4,7 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 require('dotenv').config()
-const {assert} = require("chai")
+const {assert, expect} = require("chai")
 const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
@@ -26,7 +26,7 @@ async function main() {
   // await hre.run('compile');
 
   const chainId = await currentChainId()
-  const [deployer] = await ethers.getSigners()
+  const [deployer, marketplace] = await ethers.getSigners()
 
   if (!deployed[chainId].SynCityCoupons) {
     console.error('It looks like SynCityCoupons has not been deployed on this network')
@@ -36,16 +36,21 @@ async function main() {
   const couponABI = require('../artifacts/contracts/SynCityCoupons.sol/SynCityCoupons.json').abi
   const couponNft = new ethers.Contract(deployed[chainId].SynCityCoupons, couponABI, deployer)
 
-  if (!process.env.BINANCE_ADDRESS) {
+  const target = chainId === 1337 ? marketplace.address : process.env.BINANCE_ADDRESS
+  await expect (await couponNft.setMarketplace(target))
+      .to.emit(couponNft, 'MarketplaceSet')
+      .withArgs(target)
+
+  if (!target) {
     console.log('Marketplace address not found')
     process.exit()
   }
 
   console.log('Setting marketplace...')
 
-  await couponNft.setMarketplace(process.env.BINANCE_ADDRESS)
+  await couponNft.setMarketplace(target)
 
-  console.log('Marketplace set to', process.env.BINANCE_ADDRESS)
+  console.log('Marketplace set to', target)
 
 }
 
