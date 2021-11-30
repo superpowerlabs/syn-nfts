@@ -32,7 +32,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     _;
   }
 
-  constructor() ERC721("Syn City Blueprints", "SYNB") {
+  constructor() ERC721("Syn City Genesis Blueprints", "SYNB") {
     _tokenIdTracker.increment(); // < starts from 1
   }
 

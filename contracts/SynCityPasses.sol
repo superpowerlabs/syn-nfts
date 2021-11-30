@@ -52,7 +52,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   constructor(
     uint256 _maxTokenId,
     address _validator
-  ) ERC721("Syn City Passes", "SYNP") {
+  ) ERC721("Syn City Genesis Passes", "SYNP") {
     maxTokenId = _maxTokenId;
     setValidator(_validator);
     for (uint256 i = 0; i < team.length; i++) {

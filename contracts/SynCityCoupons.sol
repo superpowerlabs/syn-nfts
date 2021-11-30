@@ -29,7 +29,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     _;
   }
 
-  constructor(uint256 maxSupply_) ERC721("Syn City Blueprint Coupons", "SYNBC") {
+  constructor(uint256 maxSupply_) ERC721("Syn City Genesis Blueprint Coupons", "SYNBC") {
     // < starts from 1
     maxSupply = maxSupply_;
   }
