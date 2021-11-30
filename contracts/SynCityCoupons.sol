@@ -12,7 +12,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
 
   event SwapperSet(address swapper);
-  event MarketplaceSet(address marketplace);
+  event DepositAddressSet(address depositAddress);
   event BaseTokenURIUpdated(string baseTokenURI);
 
   string private _baseTokenURI = "https://nft.syn.city/meta/SYNBC/";
@@ -22,7 +22,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   bool public transferEnded;
 
   uint256 public maxSupply;
-  address public marketplace;
+  address public depositAddress;
 
   modifier onlySwapper() {
     require(swapper != address(0) && _msgSender() == swapper, "forbidden");
@@ -30,14 +30,13 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   }
 
   constructor(uint256 maxSupply_) ERC721("Syn City Blueprint Coupons", "SYNBC") {
-    // < starts from 1
     maxSupply = maxSupply_;
   }
 
-  function setMarketplace(address _marketplace) external onlyOwner {
-    require(_marketplace != address(0), "_marketplace cannot be 0x0");
-    marketplace = _marketplace;
-    emit MarketplaceSet(_marketplace);
+  function setDepositAddress(address _depositAddress) external onlyOwner {
+    require(_depositAddress != address(0), "_depositAddress cannot be 0x0");
+    depositAddress = _depositAddress;
+    emit DepositAddressSet(_depositAddress);
   }
 
   // implementation required by the compiler, extending ERC721 and ERC721Enumerable
@@ -65,24 +64,24 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     require(!mintEnded, "minting ended");
     uint256 nextId = balanceOf(owner()) + 1;
     require(nextId + quantity - 1 <= maxSupply, "not enough token to be minted");
-    if (nextId + quantity - 1 == maxSupply) {
-      mintEnded = true;
-    }
     for (uint256 i = 0; i < quantity; i++) {
       _safeMint(owner(), nextId++);
+    }
+    if (nextId > maxSupply) {
+      mintEnded = true;
     }
   }
 
   function batchTransfer(uint256 quantity) external onlyOwner {
     require(mintEnded, "minting not ended yet");
     require(!transferEnded, "batch transfer ended");
-    require(balanceOf(owner()) - quantity >= 0, "not enough token to be transferred");
-    if (balanceOf(owner()) - quantity == 0) {
-      transferEnded = true;
-    }
+    uint tokenId = balanceOf(owner());
+    require(tokenId - quantity >= 0, "not enough token to be transferred");
     for (uint256 i = 0; i < quantity; i++) {
-      uint256 tokenId = tokenOfOwnerByIndex(owner(), 0);
-      safeTransferFrom(owner(), marketplace, tokenId, "");
+      safeTransferFrom(owner(), depositAddress, tokenId--, "");
+    }
+    if (tokenId == 0) {
+      transferEnded = true;
     }
   }
 

@@ -37,9 +37,6 @@ async function main() {
   const couponNft = new ethers.Contract(deployed[chainId].SynCityCoupons, couponABI, deployer)
 
   const target = chainId === 1337 ? marketplace.address : process.env.BINANCE_ADDRESS
-  await expect (await couponNft.setMarketplace(target))
-      .to.emit(couponNft, 'MarketplaceSet')
-      .withArgs(target)
 
   if (!target) {
     console.log('Marketplace address not found')
@@ -48,7 +45,9 @@ async function main() {
 
   console.log('Setting marketplace...')
 
-  await couponNft.setMarketplace(target)
+  await expect (await couponNft.setDepositAddress(target))
+      .to.emit(couponNft, 'DepositAddressSet')
+      .withArgs(target)
 
   console.log('Marketplace set to', target)
 
