@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Author: Francesco Sullo <francesco@sullo.co>
-// Forked from EverDragons2(.com)'s code
+// Author: Francesco Sullo <francesco@superpower.io>
+// Superpower Labs / Syn City
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-
-//import "hardhat/console.sol";
 
 contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   using Address for address;

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Author: Francesco Sullo <francesco@sullo.co>
-// Cryptography forked from EverDragons2(.com)'s code
+// Author: Francesco Sullo <francesco@superpower.io>
+// Superpower Labs / Syn City
+// Cryptography forked from Everdragons2(.com)'s code
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -19,7 +20,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   event ValidatorSet(address validator);
   event OperatorSet(address operator);
   event OperatorRevoked(address operator);
-  event BaseURIUpdated(); event BaseURIFrozen();
+  event BaseURIUpdated();
+  event BaseURIFrozen();
 
   uint256 public nextTokenId = 1;
   uint256 public maxTokenId;
@@ -33,7 +35,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   address public validator;
   mapping(address => bool) public operators;
-  mapping(bytes32 => bool) public usedCodes;
+  mapping(bytes32 => address) public usedCodes;
 
   modifier onlyOperator() {
     require(_msgSender() != address(0) && operators[_msgSender()], "forbidden");
@@ -41,8 +43,9 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   address[] public team = [
-    0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3, // Devansh
-    0x70f41fE744657DF9cC5BD317C58D3e7928e22E1B // Francesco
+    // length must be 8
+    0x70f41fE744657DF9cC5BD317C58D3e7928e22E1B,
+    0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3
   ];
 
   constructor(
@@ -133,12 +136,12 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   ) internal {
     require(to != address(0), "invalid sender");
     require(balanceOf(to) == 0, "one pass per wallet");
-    require(!usedCodes[authCode], "authCode already used");
+    require(usedCodes[authCode] == address(0), "authCode already used");
     require(remaining[typeIndex] > 1, "no more tokens in this category");
     require(_isSignedByValidator(encodeForSignature(to, authCode, typeIndex), signature), "invalid signature");
     require(nextTokenId <= maxTokenId, "distribution ended");
+    usedCodes[authCode] = to;
     remaining[typeIndex]--;
-    usedCodes[authCode] = true;
     _safeMint(to, nextTokenId++);
   }
 
@@ -146,6 +149,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     return validator != address(0) && validator == _hash.recover(_signature);
   }
 
+  // this is called internally by _mintToken
+  // and externally by the web3 app
   function encodeForSignature(
     address to,
     bytes32 authCode,
