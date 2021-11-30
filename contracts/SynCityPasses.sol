@@ -25,7 +25,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   uint256 public nextTokenId = 1;
   uint256 public maxTokenId = 888;
-  uint256[] private _remaining = [200, 200, 200, 200, 80];
+  uint256[] internal _remaining = [200, 200, 200, 200, 80];
 
   string private _baseTokenURI = "https://nft.syn.city/meta/SYNP/";
   bool public tokenURIHasBeenFrozen;

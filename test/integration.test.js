@@ -36,7 +36,6 @@ describe("Integration test", function () {
     await nft.deployed()
     nftAddress = nft.address
     await nft.setOperators([operator.address])
-    assert.equal(await nft.name(), 'Syn Passes Mock')
   }
 
   async function configure() {
