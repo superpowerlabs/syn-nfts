@@ -45,7 +45,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   address[] public team = [
     // length must be 8
     0x70f41fE744657DF9cC5BD317C58D3e7928e22E1B,
-    0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3
+    0x16244cdFb0D364ac5c4B42Aa530497AA762E7bb3,
+    0xe360cDb9B5348DB79CD630d0D1DE854b44638C64
   ];
 
   constructor(
