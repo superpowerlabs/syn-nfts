@@ -37,18 +37,13 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const baseTokenURI = isLocalNode
-      ? "http://localhost:6660/meta/SYNPASS/"
-      : chainId === 3
-          ? "https://blueprints.syn.city/meta/SYNPASS/"
-          : "https://nft.syn.city/meta/SYNPASS/"
   const validator = isLocalNode
       ? '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' // hardhat #4
       : process.env.VALIDATOR
 
-  const operator = isLocalNode
-      ? '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' // hardhat #2
-      : process.env.OPERATOR
+  const operators = isLocalNode
+      ? ['0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'] // hardhat #2
+      : process.env.OPERATOR.split(',')
 
   assert.isTrue(validator.length === 42)
   // assert.isTrue(operator.length === 42)
@@ -56,15 +51,14 @@ async function main() {
   const maxTokenId = process.env.MAX_TOKEN_ID || 888
 
   const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
-  const nft = await SynCityPasses.deploy(maxTokenId, validator, operator)
+  const nft = await SynCityPasses.deploy(maxTokenId, validator)
   await nft.deployed()
 
-  // await nft.setValidatorAndOperator(validator, operator)
+  await nft.setOperators(operators)
 
   const addresses = {
     SynCityPasses: nft.address
   }
-
 
   if (!deployed[chainId]) {
     deployed[chainId] = {}

@@ -65,7 +65,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     }
   }
 
-  function burn(uint256 tokenId) public virtual onlyMinter {
+  function burn(uint256 tokenId) external virtual onlyMinter {
     _burn(tokenId);
   }
 

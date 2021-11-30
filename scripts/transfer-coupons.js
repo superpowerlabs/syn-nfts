@@ -4,7 +4,7 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 require('dotenv').config()
-const {assert} = require("chai")
+const {assert, expect} = require("chai")
 const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
@@ -26,7 +26,8 @@ async function main() {
   // await hre.run('compile');
 
   const chainId = await currentChainId()
-  const [deployer] = await ethers.getSigners()
+
+  const [deployer, marketplace] = await ethers.getSigners()
 
   if (!deployed[chainId].SynCityCoupons) {
     console.error('It looks like SynCityCoupons has not been deployed on this network')
@@ -45,9 +46,14 @@ async function main() {
   let quantity = chainId === 1337 ? 20 : 40
   const maxSupply = (await couponNft.maxSupply()).toNumber()
 
+  const target = chainId === 1337 ? marketplace.address : process.env.BINANCE_ADDRESS
+  await expect (await couponNft.setMarketplace(target))
+      .to.emit(couponNft, 'MarketplaceSet')
+      .withArgs(target)
+
   while (true) {
     const ownerBalance = (await couponNft.balanceOf(deployer.address)).toNumber()
-    const balance = (await couponNft.balanceOf(process.env.BINANCE_ADDRESS)).toNumber()
+    const balance = (await couponNft.balanceOf(target)).toNumber()
     if (balance === maxSupply) {
       console.log('Batch transfer completed')
       process.exit()

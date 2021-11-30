@@ -14,6 +14,8 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
 
   event SwapperSet(address swapper);
+  event MarketplaceSet(address marketplace);
+  event BaseTokenURIUpdated(string baseTokenURI);
 
   string private _baseTokenURI = "https://nft.syn.city/meta/SYNBC/";
 
@@ -34,11 +36,13 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     maxSupply = maxSupply_;
   }
 
-  function setMarketplace(address _marketplace) external {
+  function setMarketplace(address _marketplace) external onlyOwner {
     require(_marketplace != address(0), "_marketplace cannot be 0x0");
     marketplace = _marketplace;
+    emit MarketplaceSet(_marketplace);
   }
 
+  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
   function _beforeTokenTransfer(
     address from,
     address to,
@@ -47,6 +51,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     super._beforeTokenTransfer(from, to, tokenId);
   }
 
+  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
   function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
@@ -55,17 +60,18 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
   function setSwapper(address swapper_) external onlyOwner {
     require(swapper_ != address(0), "swapper cannot be 0x0");
     swapper = swapper_;
+    emit SwapperSet(swapper);
   }
 
   function selfSafeMint(uint256 quantity) external onlyOwner {
     require(!mintEnded, "minting ended");
     uint256 nextId = balanceOf(owner()) + 1;
     require(nextId + quantity - 1 <= maxSupply, "not enough token to be minted");
+    if (nextId + quantity - 1 == maxSupply) {
+      mintEnded = true;
+    }
     for (uint256 i = 0; i < quantity; i++) {
       _safeMint(owner(), nextId++);
-    }
-    if (nextId > maxSupply) {
-      mintEnded = true;
     }
   }
 
@@ -73,17 +79,17 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
     require(mintEnded, "minting not ended yet");
     require(!transferEnded, "batch transfer ended");
     require(balanceOf(owner()) - quantity >= 0, "not enough token to be transferred");
+    if (balanceOf(owner()) - quantity == 0) {
+      transferEnded = true;
+    }
     for (uint256 i = 0; i < quantity; i++) {
       uint256 tokenId = tokenOfOwnerByIndex(owner(), 0);
       safeTransferFrom(owner(), marketplace, tokenId, "");
     }
-    if (balanceOf(marketplace) == maxSupply) {
-      transferEnded = true;
-    }
   }
 
   // swapping, the coupon will be burned
-  function burn(uint256 tokenId) public virtual onlySwapper {
+  function burn(uint256 tokenId) external virtual onlySwapper {
     _burn(tokenId);
   }
 
@@ -93,9 +99,7 @@ contract SynCityCoupons is ERC721, ERC721Enumerable, Ownable {
 
   function updateBaseURI(string memory baseTokenURI) external onlyOwner {
     _baseTokenURI = baseTokenURI;
+    emit BaseTokenURIUpdated(baseTokenURI);
   }
 
-  function contractURI() external view returns (string memory) {
-    return _baseTokenURI;
-  }
 }

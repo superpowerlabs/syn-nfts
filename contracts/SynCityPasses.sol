@@ -18,7 +18,8 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   event ValidatorSet(address validator);
   event OperatorSet(address operator);
-  event BaseURIUpdated();
+  event OperatorRevoked(address operator);
+  event BaseURIUpdated(); event BaseURIFrozen();
 
   uint256 public nextTokenId = 1;
   uint256 public maxTokenId;
@@ -31,11 +32,11 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   using SafeMath for uint256;
 
   address public validator;
-  address public operator;
+  mapping(address => bool) public operators;
   mapping(bytes32 => bool) public usedCodes;
 
   modifier onlyOperator() {
-    require(operator != address(0) && _msgSender() == operator, "forbidden");
+    require(_msgSender() != address(0) && operators[_msgSender()], "forbidden");
     _;
   }
 
@@ -46,12 +47,10 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
 
   constructor(
     uint256 _maxTokenId,
-    address _validator,
-    address _operator
+    address _validator
   ) ERC721("Syn City Passes", "SYNP") {
     maxTokenId = _maxTokenId;
     setValidator(_validator);
-    setOperator(_operator);
     for (uint256 i = 0; i < team.length; i++) {
       _safeMint(team[i], nextTokenId++);
     }
@@ -67,10 +66,17 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     emit ValidatorSet(validator);
   }
 
-  function setOperator(address operator_) public onlyOwner {
-    require(operator_ != address(0), "operator cannot be 0x0");
-    operator = operator_;
-    emit OperatorSet(operator);
+  function setOperators(address[] memory _operators) public onlyOwner {
+    for (uint j=0;j<_operators.length; j++) {
+      require(_operators[j] != address(0), "operator cannot be 0x0");
+      operators[_operators[j]] = true;
+      emit OperatorSet(_operators[j]);
+    }
+  }
+
+  function revokeOperator(address operator_) external onlyOwner {
+    delete operators[operator_];
+    emit OperatorRevoked(operator_);
   }
 
   function _beforeTokenTransfer(
@@ -96,7 +102,7 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   }
 
   function freezeBaseTokenURI() external onlyOwner {
-    tokenURIHasBeenFrozen = true;
+    tokenURIHasBeenFrozen = true; emit BaseURIFrozen();
   }
 
   function contractURI() external view returns (string memory) {
@@ -129,14 +135,14 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
     require(balanceOf(to) == 0, "one pass per wallet");
     require(!usedCodes[authCode], "authCode already used");
     require(remaining[typeIndex] > 1, "no more tokens in this category");
-    require(isSignedByValidator(encodeForSignature(to, authCode, typeIndex), signature), "invalid signature");
+    require(_isSignedByValidator(encodeForSignature(to, authCode, typeIndex), signature), "invalid signature");
     require(nextTokenId <= maxTokenId, "distribution ended");
-    _safeMint(to, nextTokenId++);
     remaining[typeIndex]--;
     usedCodes[authCode] = true;
+    _safeMint(to, nextTokenId++);
   }
 
-  function isSignedByValidator(bytes32 _hash, bytes memory _signature) public view returns (bool) {
+  function _isSignedByValidator(bytes32 _hash, bytes memory _signature) private view returns (bool) {
     return validator != address(0) && validator == _hash.recover(_signature);
   }
 
