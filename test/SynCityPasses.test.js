@@ -72,10 +72,10 @@ describe("SynCityPasses", function () {
           .to.emit(nft, 'Transfer')
           .withArgs(addr0, communityMenber1.address, 9)
 
-      assert(await nft.usedCodes(authCode), communityMenber1.address)
+      assert.equal(await nft.usedCodes(authCode), communityMenber1.address)
 
       const remaining = await nft.getRemaining(0)
-      expect(remaining, 199)
+      assert.equal(remaining, 199)
 
     })
 
@@ -86,13 +86,13 @@ describe("SynCityPasses", function () {
       let hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
       let signature = await signPackedData(hash)
 
-      await expect(await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature))
+      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
 
       authCode = ethers.utils.id('b' + Math.random())
       hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
       signature = await signPackedData(hash)
 
-      assertThrowsMessage(
+      await assertThrowsMessage(
           nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
           'one pass per wallet'
       )
@@ -106,9 +106,9 @@ describe("SynCityPasses", function () {
       let hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
       let signature = await signPackedData(hash)
 
-      await expect(await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature))
+      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
 
-      assertThrowsMessage(
+      await assertThrowsMessage(
           nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
           'authCode already used'
       )
@@ -134,10 +134,10 @@ describe("SynCityPasses", function () {
           .to.emit(nft, 'Transfer')
           .withArgs(addr0, communityMenber1.address, 9)
 
-      assert(await nft.usedCodes(authCode), communityMenber1.address)
+      assert.equal(await nft.usedCodes(authCode), communityMenber1.address)
 
       const remaining = await nft.getRemaining(4)
-      expect(remaining, 79)
+      assert.equal(remaining, 79)
 
     })
 
