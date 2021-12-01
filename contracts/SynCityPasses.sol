@@ -9,11 +9,10 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 //import "hardhat/console.sol";
 
-contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
+contract SynCityPasses is ERC721, Ownable {
   using Address for address;
   using ECDSA for bytes32;
 
@@ -81,20 +80,6 @@ contract SynCityPasses is ERC721, ERC721Enumerable, Ownable {
   function revokeOperator(address operator_) external onlyOwner {
     delete operators[operator_];
     emit OperatorRevoked(operator_);
-  }
-
-  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 tokenId
-  ) internal override(ERC721, ERC721Enumerable) {
-    super._beforeTokenTransfer(from, to, tokenId);
-  }
-
-  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
-  function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
-    return super.supportsInterface(interfaceId);
   }
 
   function _baseURI() internal view virtual override returns (string memory) {
