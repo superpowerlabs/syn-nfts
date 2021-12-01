@@ -82,20 +82,6 @@ contract SynCityPasses is ERC721, Ownable {
     emit OperatorRevoked(operator_);
   }
 
-//  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
-//  function _beforeTokenTransfer(
-//    address from,
-//    address to,
-//    uint256 tokenId
-//  ) internal override(ERC721, ERC721Enumerable) {
-//    super._beforeTokenTransfer(from, to, tokenId);
-//  }
-//
-//  // implementation required by the compiler, extending ERC721 and ERC721Enumerable
-//  function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
-//    return super.supportsInterface(interfaceId);
-//  }
-
   function _baseURI() internal view virtual override returns (string memory) {
     return _baseTokenURI;
   }
