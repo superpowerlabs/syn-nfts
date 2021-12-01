@@ -48,10 +48,8 @@ async function main() {
   assert.isTrue(validator.length === 42)
   // assert.isTrue(operator.length === 42)
 
-  const maxTokenId = process.env.MAX_TOKEN_ID || 888
-
   const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
-  const nft = await SynCityPasses.deploy(maxTokenId, validator)
+  const nft = await SynCityPasses.deploy(validator)
   await nft.deployed()
 
   await nft.setOperators(operators)
