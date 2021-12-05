@@ -14,10 +14,12 @@ assert.isTrue(validator.length === 42)
 
 const maxTokenId = process.env.MAX_TOKEN_ID || 888
 
-const cmd =`npx hardhat verify --show-stack-traces \\
+const cmd =`npx hardhat verify \\
+  --contract contracts/SynCityPasses.sol:SynCityPasses \\
+  --show-stack-traces \\
   --network ${network} \\
   ${deployed.SynCityPasses} \\
-  ${maxTokenId} ${validator}
+  ${validator}
 `
 
 console.log(cmd)
