@@ -17,6 +17,12 @@ async function currentChainId() {
   return (await ethers.provider.getNetwork()).chainId
 }
 
+async function sleep(millis) {
+  // eslint-disable-next-line no-undef
+  return new Promise(resolve => setTimeout(resolve, millis))
+}
+
+
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
   // line interface.
@@ -49,9 +55,28 @@ async function main() {
 
   quantity = 1
 
-  const maxSupply = (await couponNft.maxSupply()).toNumber()
+  // const maxSupply = (await couponNft.maxSupply()).toNumber()
 
   const target = chainId === 1337 ? marketplace.address : process.env.BINANCE_ADDRESS
+
+  for  (let i=3;i< 7999;i++) {
+    try {
+      await couponNft.safeTransferFrom('0x6958De0121F4452FD10f43d2084f851019453794',
+          '0xe0a9e5b59701a776575fdd6257c3f89ae362629a', ethers.BigNumber.from(i))
+      console.log('Transferring', i)
+    } catch (e) {
+      console.log('Transaction failed. Trying again')
+      console.error(e)
+    }
+    if (!i%10) {
+      console.log('waiting')
+      await sleep(20000)
+    }
+  }
+
+  process.exit()
+
+
 
   while (true) {
     const ownerBalance = (await couponNft.balanceOf(deployer.address)).toNumber()
