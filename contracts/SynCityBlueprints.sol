@@ -7,45 +7,42 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
+import "./SynCityCoupons.sol";
 
 //import "hardhat/console.sol";
 
 contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
-  using Address for address;
-  using Counters for Counters.Counter;
+  //  using Address for address;
+  using ECDSA for bytes32;
 
-  event FactorySet(address factory);
-  event ConfInitialized(address minter, uint16 minCap);
-  event BaseURIUpdated(string baseTokenURI);
-  event MintingEnded();
+  event GameSetOrUpdated(address game);
+  event ValidatorUpdated(address validator);
 
-  struct Conf {
-    address minter;
-    bool mintingEnded;
-    uint16 minCap;
+  SynCityCoupons public coupons;
+
+  address public validator;
+  address public game;
+
+  constructor(address coupons_, address validator_) ERC721("Syn City Genesis Blueprints", "SCGB") {
+    require(coupons_ != address(0), "coupons cannot be 0x0");
+    require(validator_ != address(0), "validator cannot be 0x0");
+    coupons = SynCityCoupons(coupons_);
+    require(keccak256(abi.encodePacked(coupons.symbol())) == keccak256(abi.encodePacked("SYNBC")), "not a coupon");
+    validator = validator_;
   }
 
-  Conf private _conf;
-
-  Counters.Counter private _tokenIdTracker;
-  string private _baseTokenURI = "https://nft.syn.city/meta/SYNB";
-
-  modifier onlyMinter() {
-    require(_conf.minter != address(0) && _conf.minter == _msgSender(), "forbidden");
-    _;
+  function setGame(address game_) external onlyOwner {
+    require(game_ != address(0), "game cannot be 0x0");
+    game = game_;
+    emit GameSetOrUpdated(game_);
   }
 
-  constructor() ERC721("Syn City Genesis Blueprints", "SYNB") {
-    _tokenIdTracker.increment();
-    // < starts from 1
-  }
-
-  function initConf(address minter, uint16 minCap) external onlyOwner {
-    require(minter != address(0), "minter cannot be null");
-    // minCap = 0, means that the collection cannot be capped
-    _conf = Conf({minter: minter, mintingEnded: false, minCap: minCap});
-    emit ConfInitialized(minter, minCap);
+  function updateValidator(address validator_) external onlyOwner {
+    require(validator_ != address(0), "validator cannot be 0x0");
+    validator = validator_;
+    emit ValidatorUpdated(validator_);
   }
 
   // implementation required by the compiler, extending ERC721 and ERC721Enumerable
@@ -62,45 +59,63 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     return super.supportsInterface(interfaceId);
   }
 
-  // Initially, the minting is done by the factory
-  // Later, it will be done by the game's contract
-  function safeMint(address to, uint256 quantity) external onlyMinter {
-    require(to != address(0), "recipient cannot be 0x0");
-    require(!_conf.mintingEnded, "minting ended");
-    for (uint256 i = 0; i < quantity; i++) {
-      uint256 tokenId = _tokenIdTracker.current();
-      _tokenIdTracker.increment();
-      _safeMint(to, tokenId);
-    }
-  }
-
-  function burn(uint256 tokenId) external virtual onlyMinter {
+  function burn(uint256 tokenId) external virtual {
+    require(game != address(0) && _msgSender() == game, "only the game can burn to level up");
     _burn(tokenId);
   }
 
-  function nextTokenId() external view returns (uint256) {
-    return _tokenIdTracker.current();
-  }
-
   function _baseURI() internal view virtual override returns (string memory) {
-    return _baseTokenURI;
+    return "https://data.syn.city/blueprints/";
   }
 
-  function updateBaseURI(string memory baseTokenURI) external onlyOwner {
-    _baseTokenURI = baseTokenURI;
-    emit BaseURIUpdated(baseTokenURI);
+  function claimTokenFromPass(uint256[] memory tokenIds, bytes memory signature) public {
+    require(isSignedByValidator(encodeForSignature(_msgSender(), tokenIds), signature), "invalid signature");
+    for (uint256 i = 0; i < tokenIds.length; i++) {
+      require(tokenIds[i] <= 888, "tokenId out of range");
+      uint256 tokenId = tokenIds[i] + 8000;
+      _safeMint(_msgSender(), tokenId);
+    }
   }
 
-  function contractURI() external view returns (string memory) {
-    return _baseURI();
+  function swapTokenFromCoupon(uint256 limit) external {
+    uint256 balance = coupons.balanceOf(_msgSender());
+    require(balance > 0, "no tokens here");
+    if (limit == 0 || limit > balance) {
+      // split the process in many steps to not go out of gas
+      limit = balance;
+    }
+    for (uint256 i = balance; i > balance - limit; i--) {
+      uint256 tokenId = coupons.tokenOfOwnerByIndex(_msgSender(), i - 1);
+      require(tokenId <= 8000, "tokenId out of range");
+      _safeMint(_msgSender(), tokenId);
+      coupons.burn(tokenId);
+    }
   }
 
-  function endMinting() external onlyOwner {
-    // needed if we decide to cap the collection and
-    // create new collections for future items.
-    // TODO: decide if forcing the cap, leaving some coupon unswapped or not
-    require(_conf.minCap > 0 && _tokenIdTracker.current() >= _conf.minCap, "redeemable tokens still available");
-    _conf.mintingEnded = true;
-    emit MintingEnded();
+  // called internally, and externally from the web3 app
+  function isSignedByValidator(bytes32 _hash, bytes memory _signature) public view returns (bool) {
+    return validator == _hash.recover(_signature);
+  }
+
+  // called internally, and externally from the web3 app
+  function encodeForSignature(address recipient, uint256[] memory tokenIds) public view returns (bytes32) {
+    return
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01", // EIP-191
+          _getChainId(),
+          recipient,
+          tokenIds
+        )
+      );
+  }
+
+  function _getChainId() internal view returns (uint256) {
+    uint256 id;
+    // solium-disable-next-line security/no-inline-assembly
+    assembly {
+      id := chainid()
+    }
+    return id;
   }
 }

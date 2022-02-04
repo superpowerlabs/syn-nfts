@@ -122,7 +122,6 @@ describe("Integration test", function () {
       assert.equal(await nft.getRemaining(1), 0)
       assert.equal(await nft.getRemaining(2), 0)
 
-      assert.equal((await nft.totalSupply()).toNumber(), 14)
       assert.equal(await nft.ownerOf(1), '0x70f41fE744657DF9cC5BD317C58D3e7928e22E1B')
 
       authCode = ethers.utils.id('b' + Math.random())

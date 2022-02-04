@@ -45,9 +45,9 @@ async function main() {
     console.log('Minting not ended yet')
     process.exit()
   }
-  let quantity = chainId === 1337 ? 20 : 40
+  let quantity = chainId === 1337 ? 20 : 17
 
-  quantity = 1
+  quantity = 5
 
   const maxSupply = (await couponNft.maxSupply()).toNumber()
 
@@ -56,13 +56,13 @@ async function main() {
   while (true) {
     const ownerBalance = (await couponNft.balanceOf(deployer.address)).toNumber()
     const balance = (await couponNft.balanceOf(target)).toNumber()
-    if (balance === maxSupply) {
-      console.log('Batch transfer completed')
+    if (balance === maxSupply - 8) {
+      console.log('Batch transfer completed. Finish it manually')
       process.exit()
     } else if (ownerBalance === 0) {
       console.log('Owner does not have enough token')
     } else {
-      if (ownerBalance - quantity < 0) {
+      if (ownerBalance - quantity < 12) {
         quantity = ownerBalance
       }
       console.log('Owner balance:', ownerBalance)
@@ -76,7 +76,6 @@ async function main() {
         console.error(e)
       }
     }
-    break
     await new Promise(resolve => setTimeout(resolve, chainId === 1337 ? 5000 : 10000))
   }
 
