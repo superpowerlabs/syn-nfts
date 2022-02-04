@@ -19,4 +19,5 @@ contract SynCityPassesMock is SynCityPasses {
     _remaining[2] = 2;
     maxTokenId = 14;
   }
+
 }
