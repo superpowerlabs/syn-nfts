@@ -70,9 +70,9 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
 
   function claimTokenFromPass(uint256[] memory tokenIds, bytes memory signature) public {
     require(isSignedByValidator(encodeForSignature(_msgSender(), tokenIds), signature), "invalid signature");
-    for (uint i = 0; i < tokenIds.length; i++) {
+    for (uint256 i = 0; i < tokenIds.length; i++) {
       require(tokenIds[i] <= 888, "tokenId out of range");
-      uint tokenId = tokenIds[i] + 8000;
+      uint256 tokenId = tokenIds[i] + 8000;
       _safeMint(_msgSender(), tokenId);
     }
   }
@@ -100,14 +100,14 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   // called internally, and externally from the web3 app
   function encodeForSignature(address recipient, uint256[] memory tokenIds) public view returns (bytes32) {
     return
-    keccak256(
-      abi.encodePacked(
-        "\x19\x01", // EIP-191
-        _getChainId(),
-        recipient,
-        tokenIds
-      )
-    );
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01", // EIP-191
+          _getChainId(),
+          recipient,
+          tokenIds
+        )
+      );
   }
 
   function _getChainId() internal view returns (uint256) {
