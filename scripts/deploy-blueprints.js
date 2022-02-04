@@ -52,24 +52,14 @@ async function main() {
   assert.isTrue(validator.length === 42)
 
   const SynCityBlueprints = await ethers.getContractFactory("SynCityBlueprints")
-  const nft = await SynCityBlueprints.deploy()
+  const nft = await SynCityBlueprints.deploy(couponNft.address, validator)
   await nft.deployed()
 
   const addresses = {
     SynCityBlueprints: nft.address
   }
 
-  const SynCitySwapper = await ethers.getContractFactory("SynCitySwapper")
-  const swapper = await SynCitySwapper.deploy(
-      addresses.SynCityBlueprints,
-      deployed[chainId].SynCityCoupons,
-      validator
-  )
-  await swapper.deployed()
-
-  addresses.SynCitySwapper = swapper.address
-
-  await couponNft.setSwapper(swapper.address)
+  await couponNft.setSwapper(nft.address)
 
   if (!deployed[chainId]) {
     deployed[chainId] = {}
@@ -81,10 +71,6 @@ async function main() {
   const deployedJson = path.resolve(__dirname, '../export/deployed.json')
   await fs.ensureDir(path.dirname(deployedJson))
   await fs.writeFile(deployedJson, JSON.stringify(deployed, null, 2))
-
-  const tmpDir = path.resolve(__dirname, '../tmp/SynCityBlueprints')
-  await fs.ensureDir(tmpDir)
-  await fs.writeFile(path.join(tmpDir, chainId.toString()), addresses.SynCityBlueprints)
 
 }
 
