@@ -64,3 +64,5 @@ env.json
 export
 .env
 .env.*
+
+/tmp
