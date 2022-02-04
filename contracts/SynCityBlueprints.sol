@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./SynCityCoupons.sol";
 
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   //  using Address for address;
@@ -26,6 +26,8 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   address public game;
 
   constructor(address coupons_, address validator_) ERC721("Syn City Genesis Blueprints", "SYNB") {
+    require(coupons_ != address(0), "coupons cannot be 0x0");
+    require(validator_ != address(0), "validator cannot be 0x0");
     coupons = SynCityCoupons(coupons_);
     validator = validator_;
   }
@@ -37,7 +39,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   }
 
   function updateValidator(address validator_) external onlyOwner {
-    require(validator_ != address(0), "game cannot be 0x0");
+    require(validator_ != address(0), "validator cannot be 0x0");
     validator = validator_;
     emit ValidatorUpdated(validator_);
   }
