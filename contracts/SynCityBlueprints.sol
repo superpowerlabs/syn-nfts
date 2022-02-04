@@ -29,6 +29,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
     require(coupons_ != address(0), "coupons cannot be 0x0");
     require(validator_ != address(0), "validator cannot be 0x0");
     coupons = SynCityCoupons(coupons_);
+    require(keccak256(abi.encodePacked(coupons.symbol())) == keccak256(abi.encodePacked("SYNBC")), "not a coupon");
     validator = validator_;
   }
 
