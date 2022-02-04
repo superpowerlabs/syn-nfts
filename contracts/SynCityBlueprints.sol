@@ -25,7 +25,7 @@ contract SynCityBlueprints is ERC721, ERC721Enumerable, Ownable {
   address public validator;
   address public game;
 
-  constructor(address coupons_, address validator_) ERC721("Syn City Genesis Blueprints", "SYNB") {
+  constructor(address coupons_, address validator_) ERC721("Syn City Genesis Blueprints", "SCGB") {
     require(coupons_ != address(0), "coupons cannot be 0x0");
     require(validator_ != address(0), "validator cannot be 0x0");
     coupons = SynCityCoupons(coupons_);
