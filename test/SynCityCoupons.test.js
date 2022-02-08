@@ -40,7 +40,7 @@ describe.only("SynCityCoupons", function () {
 
       })
 
-      describe.only('#selfSafeMint', async function () {
+      describe('#selfSafeMint', async function () {
 
         beforeEach(async function () {
           await initAndDeploy()
