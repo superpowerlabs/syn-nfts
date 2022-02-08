@@ -17,26 +17,11 @@ describe.only("SynCityCoupons", function () {
         SynCityCoupons = await ethers.getContractFactory("SynCityCoupons")
       })
 
-      async function batchTransfer(buyer, ids) {
-        for (let i of ids) {
-          await coupons.connect(marketplace)["safeTransferFrom(address,address,uint256)"](marketplace.address, buyer.address, i)
-        }
-      }    
-
       async function initAndDeploy() {
-        coupons = await SynCityCoupons.deploy(20)
+        coupons = await SynCityCoupons.deploy(50)
         await coupons.deployed()
-        await coupons.selfSafeMint(19)
-        await coupons.selfSafeMint(1)
-        await coupons.setDepositAddress(marketplace.address)
-        await coupons.batchTransfer(20)
-        await batchTransfer(buyer1, [1, 3, 5])
-        await batchTransfer(buyer2, [2, 12, 13, 14, 17])
-        await batchTransfer(buyer3, [4, 6, 7, 9, 10, 11, 15])
-        await batchTransfer(buyer4, [8,16, 18, 19, 20])
-        
-      }
 
+      }
 
       describe('constructor and initialization', async function () {
 
@@ -44,40 +29,69 @@ describe.only("SynCityCoupons", function () {
           await initAndDeploy()
         })
 
-    
-        it("should get max supply is 20", async function () {
-           expect(await coupons.maxSupply()).equal(20)
+        it("should verify that the max supply is correct", async function () {
+           expect(await coupons.maxSupply()).equal(50)
         })
 
-        it("should set deposit address", async function () {
-             expect( await coupons.depositAddress()).equal(marketplace.address)
-          })
+        it("should verify that name and symbol are correct", async function () {
+          expect(await coupons.name()).equal('Syn City Blueprint Coupons')
+          expect(await coupons.symbol()).equal('SYNBC')
+        })
 
-          it("should batch transfer balances ", async function () {
-            expect(await coupons.balanceOf(buyer1.address)).equal(3)
-            expect(await coupons.balanceOf(buyer2.address)).equal(5)
-            expect(await coupons.balanceOf(buyer3.address)).equal(7)
-            expect(await coupons.balanceOf(buyer4.address)).equal(5)
-            expect(await coupons.balanceOf(buyer5.address)).equal(0)
-          })
+      })
 
+      describe.only('#selfSafeMint', async function () {
 
-        //   it("should not let you mint anymore tokens ", async function () {
-        //      expect( async function() {  
-        //             await coupons.selfSafeMint(100)    
-        //     }).to.throw()
-        //   })
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
 
-        //   it("should burn token", async function () {
-        //    await coupons.burn(1)
-        //    expect(await coupons.balanceOf(buyer1.address)).equal(3)
-        //  })
+        it('should mint 10 tokens', async function () {
 
+          expect(await coupons.selfSafeMint(10))
+              .to.emit(coupons, 'Transfer')
+              .withArgs(ethers.constants.AddressZero, owner.address, 1)
+              .to.emit(coupons, 'Transfer')
+              .withArgs(ethers.constants.AddressZero, owner.address, 5)
+              .to.emit(coupons, 'Transfer')
+              .withArgs(ethers.constants.AddressZero, owner.address, 10)
 
+          expect(await coupons.balanceOf(owner.address)).equal(10)
 
+        })
 
+        it('should verify that if I mint 30 before and 20 later I get 50 in total', async function () {
+          await coupons.selfSafeMint(30)
+          await coupons.selfSafeMint(20)
+          expect(await coupons.balanceOf(owner.address)).equal(50)
+        })
 
-    
-    
+        it('should verify that mintEnded is true if minting 50 tokens', async function () {
+          await coupons.selfSafeMint(49)
+          expect(await coupons.mintEnded()).equal(false)
+          await coupons.selfSafeMint(1)
+          expect(await coupons.mintEnded()).equal(true)
+        })
+
+        it('should revert if I mint 30 before and 30 later', async function () {
+          await coupons.selfSafeMint(30)
+
+          await assertThrowsMessage(
+              coupons.selfSafeMint(30),
+              'not enough token to be minted'
+          )
+
+        })
+
+        it('should revert if I mint is ended', async function () {
+          await coupons.selfSafeMint(50)
+
+          await assertThrowsMessage(
+              coupons.selfSafeMint(30),
+              'minting ended'
+          )
+
+        })
+
       })
 })
