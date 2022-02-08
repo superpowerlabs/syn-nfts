@@ -59,10 +59,6 @@ async function main() {
   await fs.ensureDir(path.dirname(deployedJson))
   await fs.writeFile(deployedJson, JSON.stringify(deployed, null, 2))
 
-  const tmpDir = path.resolve(__dirname, '../tmp/SynCityCoupons')
-  await fs.ensureDir(tmpDir)
-  await fs.writeFile(path.join(tmpDir, chainId.toString()), addresses.SynCityCoupons)
-
 }
 
 // We recommend this pattern to be able to use async/await everywhere
