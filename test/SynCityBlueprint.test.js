@@ -4,7 +4,7 @@ const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, increaseBl
 
 // tests to be fixed
 
-describe.only("SynCityBlueprint", function () {
+describe("SynCityBlueprint", function () {
 
   let SynCityCoupons, coupons,
       SynCityBlueprints, blueprints
