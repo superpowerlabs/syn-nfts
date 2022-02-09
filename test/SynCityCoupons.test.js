@@ -95,7 +95,22 @@ describe("SynCityCoupons", function () {
 
       })
 
-      describe('setDepositAddress ', async function () {
+      describe('#setSwapper ', async function () {
+
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+        it("should verify that the default swapper address is 0x0", async function () {
+            expect(await coupons.depositAddress()).equal("0x0000000000000000000000000000000000000000")
+         })
+        it("should verify that setSwapper address is working", async function () {
+          await coupons.setSwapper(operator.address)
+          expect(await coupons.swapper()).equal(operator.address)
+        })
+      })
+
+      describe('#setDepositAddress ', async function () {
 
         beforeEach(async function () {
           await initAndDeploy()
@@ -119,7 +134,7 @@ describe("SynCityCoupons", function () {
           await initAndDeploy()
         })
 
-      it('should test if batchTransfer reverts when minting has not ended', async function () {
+      it('should revert when minting has not ended', async function () {
 
         await assertThrowsMessage(
             coupons.batchTransfer(30),
@@ -128,7 +143,7 @@ describe("SynCityCoupons", function () {
 
       })
 
-      it('should test if batchTransfer reverts when minting is complete but deposit adsress is not set', async function () {
+      it('should revert when minting is complete but deposit adsress is not set', async function () {
          await coupons.selfSafeMint(50)
         await assertThrowsMessage(
             coupons.batchTransfer(30),
@@ -136,14 +151,32 @@ describe("SynCityCoupons", function () {
         )
         })
 
-        it('should test if batchTransfer works when minting is complete and deposit adsress is not set', async function () {
+        it('should work when minting is complete and deposit address is set', async function () {
             await coupons.selfSafeMint(50)
             await coupons.setDepositAddress(buyer1.address)
             await coupons.batchTransfer(30)
             expect(await coupons.balanceOf(buyer1.address)).equal(30)
            })
-
-
-
     })
+
+
+    describe.only('#burn ', async function () {
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+        it("should revert if not swapper", async function () {
+            await coupons.selfSafeMint(50)
+            await assertThrowsMessage(
+                coupons.burn(30),
+                'forbidden'
+            )
+         })
+
+        it("should work when connected as swapper", async function () {
+          await coupons.selfSafeMint(50)
+          await coupons.setSwapper(operator.address)
+          await coupons.connect(operator).burn(5)
+        })
+      })
 })
