@@ -175,8 +175,25 @@ describe("SynCityCoupons", function () {
 
         it("should work when connected as swapper", async function () {
           await coupons.selfSafeMint(50)
+          expect(await coupons.balanceOf(owner.address)).equal(50)
           await coupons.setSwapper(operator.address)
-          await coupons.connect(operator).burn(5)
+          await coupons.connect(operator).burn(10)
+          expect(await coupons.balanceOf(owner.address)).equal(49)
+          await coupons.connect(operator).burn(11)
+          await coupons.connect(operator).burn(12)
+          await coupons.connect(operator).burn(13)
+          await coupons.connect(operator).burn(14)
+          expect(await coupons.balanceOf(owner.address)).equal(45)
         })
+
+        it("should revert if burn non existent token id", async function () {
+            await coupons.selfSafeMint(50)
+            await coupons.setSwapper(operator.address)
+            await coupons.connect(operator).burn(1)
+            await assertThrowsMessage(
+                coupons.connect(operator).burn(1),
+                'owner query for nonexistent token'
+            )
+         })
       })
 })
