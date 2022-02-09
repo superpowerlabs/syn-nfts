@@ -95,22 +95,25 @@ describe("SynCityCoupons", function () {
 
       })
 
-      describe('#setSwapper ', async function () {
+      describe('#setSwapper', async function () {
 
         beforeEach(async function () {
           await initAndDeploy()
         })
 
         it("should verify that the default swapper address is 0x0", async function () {
-            expect(await coupons.depositAddress()).equal("0x0000000000000000000000000000000000000000")
+            expect(await coupons.swapper()).equal("0x0000000000000000000000000000000000000000")
          })
         it("should verify that setSwapper address is working", async function () {
           await coupons.setSwapper(operator.address)
           expect(await coupons.swapper()).equal(operator.address)
         })
+        it("should verify that setSwapper emits event SwapperSet", async function () {
+            expect(await coupons.setSwapper(operator.address)).to.emit(coupons, "SwapperSet").withArgs(operator.address)
+          })
       })
 
-      describe('#setDepositAddress ', async function () {
+      describe('#setDepositAddress', async function () {
 
         beforeEach(async function () {
           await initAndDeploy()
@@ -124,6 +127,9 @@ describe("SynCityCoupons", function () {
             await coupons.setDepositAddress(buyer1.address)
             expect(await coupons.depositAddress()).equal(buyer1.address)
          })
+         it("should verify that setDepositAddress emits event DepositAddressSet", async function () {
+            expect(await coupons.setDepositAddress(buyer1.address)).to.emit(coupons, "DepositAddressSet").withArgs(buyer1.address)
+          })
 
       })
 
@@ -160,7 +166,7 @@ describe("SynCityCoupons", function () {
     })
 
 
-    describe.only('#burn ', async function () {
+    describe('#burn ', async function () {
         beforeEach(async function () {
           await initAndDeploy()
         })
@@ -195,5 +201,14 @@ describe("SynCityCoupons", function () {
                 'owner query for nonexistent token'
             )
          })
+      })
+
+      describe('#updateBaseURI ', async function () {
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+        it("should emit event BaseTokenURIUpdated ", async function () {
+            expect(await coupons.updateBaseURI("new uri")).to.emit(coupons, "BaseTokenURIUpdated").withArgs("new uri")
+        })
       })
 })
