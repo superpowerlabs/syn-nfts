@@ -1,6 +1,7 @@
 require('dotenv').config()
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
+require('solidity-coverage')
 // const requireOrMock = require('require-or-mock');
 
 if (process.env.GAS_REPORT === 'yes') {

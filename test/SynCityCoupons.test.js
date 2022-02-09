@@ -3,7 +3,7 @@ const {expect, assert} = require("chai")
 const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, increaseBlockTimestampBy} = require('./helpers')
 
 
-describe.only("SynCityCoupons", function () {
+describe("SynCityCoupons", function () {
 
 
     let SynCityCoupons, coupons
@@ -94,4 +94,19 @@ describe.only("SynCityCoupons", function () {
         })
 
       })
+      describe.only('#batchTransfer', async function () {
+
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+      it('should test if batchTransfer works', async function () {
+
+        await assertThrowsMessage(
+            coupons.batchTransfer(30),
+            'minting not ended yet'
+        )
+
+      })
+    })
 })
