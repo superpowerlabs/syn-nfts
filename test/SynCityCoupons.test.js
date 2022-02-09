@@ -3,7 +3,7 @@ const {expect, assert} = require("chai")
 const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, increaseBlockTimestampBy} = require('./helpers')
 
 
-describe.only("SynCityCoupons", function () {
+describe("SynCityCoupons", function () {
 
 
     let SynCityCoupons, coupons
@@ -93,5 +93,122 @@ describe.only("SynCityCoupons", function () {
 
         })
 
+      })
+
+      describe('#setSwapper', async function () {
+
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+        it("should verify that the default swapper address is 0x0", async function () {
+            expect(await coupons.swapper()).equal("0x0000000000000000000000000000000000000000")
+         })
+        it("should verify that setSwapper address is working", async function () {
+          await coupons.setSwapper(operator.address)
+          expect(await coupons.swapper()).equal(operator.address)
+        })
+        it("should verify that setSwapper emits event SwapperSet", async function () {
+            expect(await coupons.setSwapper(operator.address)).to.emit(coupons, "SwapperSet").withArgs(operator.address)
+          })
+      })
+
+      describe('#setDepositAddress', async function () {
+
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+        it("should verify that the default deposit address is 0x0", async function () {
+            
+           expect(await coupons.depositAddress()).equal("0x0000000000000000000000000000000000000000")
+        })
+        it("should test that setDepositAddress sets the address properly", async function () {
+            await coupons.setDepositAddress(buyer1.address)
+            expect(await coupons.depositAddress()).equal(buyer1.address)
+         })
+         it("should verify that setDepositAddress emits event DepositAddressSet", async function () {
+            expect(await coupons.setDepositAddress(buyer1.address)).to.emit(coupons, "DepositAddressSet").withArgs(buyer1.address)
+          })
+
+      })
+
+
+      describe('#batchTransfer', async function () {
+
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+      it('should revert when minting has not ended', async function () {
+
+        await assertThrowsMessage(
+            coupons.batchTransfer(30),
+            'minting not ended yet'
+        )
+
+      })
+
+      it('should revert when minting is complete but deposit adsress is not set', async function () {
+         await coupons.selfSafeMint(50)
+        await assertThrowsMessage(
+            coupons.batchTransfer(30),
+            'transfer to the zero address'
+        )
+        })
+
+        it('should work when minting is complete and deposit address is set', async function () {
+            await coupons.selfSafeMint(50)
+            await coupons.setDepositAddress(buyer1.address)
+            await coupons.batchTransfer(30)
+            expect(await coupons.balanceOf(buyer1.address)).equal(30)
+           })
+    })
+
+
+    describe('#burn ', async function () {
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+        it("should revert if not swapper", async function () {
+            await coupons.selfSafeMint(50)
+            await assertThrowsMessage(
+                coupons.burn(30),
+                'forbidden'
+            )
+         })
+
+        it("should work when connected as swapper", async function () {
+          await coupons.selfSafeMint(50)
+          expect(await coupons.balanceOf(owner.address)).equal(50)
+          await coupons.setSwapper(operator.address)
+          await coupons.connect(operator).burn(10)
+          expect(await coupons.balanceOf(owner.address)).equal(49)
+          await coupons.connect(operator).burn(11)
+          await coupons.connect(operator).burn(12)
+          await coupons.connect(operator).burn(13)
+          await coupons.connect(operator).burn(14)
+          expect(await coupons.balanceOf(owner.address)).equal(45)
+        })
+
+        it("should revert if burn non existent token id", async function () {
+            await coupons.selfSafeMint(50)
+            await coupons.setSwapper(operator.address)
+            await coupons.connect(operator).burn(1)
+            await assertThrowsMessage(
+                coupons.connect(operator).burn(1),
+                'owner query for nonexistent token'
+            )
+         })
+      })
+
+      describe('#updateBaseURI ', async function () {
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+        it("should emit event BaseTokenURIUpdated ", async function () {
+            expect(await coupons.updateBaseURI("new uri")).to.emit(coupons, "BaseTokenURIUpdated").withArgs("new uri")
+        })
       })
 })
