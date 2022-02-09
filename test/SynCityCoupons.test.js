@@ -94,13 +94,32 @@ describe("SynCityCoupons", function () {
         })
 
       })
-      describe.only('#batchTransfer', async function () {
+
+      describe('setDepositAddress ', async function () {
 
         beforeEach(async function () {
           await initAndDeploy()
         })
 
-      it('should test if batchTransfer works', async function () {
+        it("should verify that the default deposit address is 0x0", async function () {
+            
+           expect(await coupons.depositAddress()).equal("0x0000000000000000000000000000000000000000")
+        })
+        it("should test that setDepositAddress sets the address properly", async function () {
+            await coupons.setDepositAddress(buyer1.address)
+            expect(await coupons.depositAddress()).equal(buyer1.address)
+         })
+
+      })
+
+
+      describe('#batchTransfer', async function () {
+
+        beforeEach(async function () {
+          await initAndDeploy()
+        })
+
+      it('should test if batchTransfer reverts when minting has not ended', async function () {
 
         await assertThrowsMessage(
             coupons.batchTransfer(30),
@@ -108,5 +127,23 @@ describe("SynCityCoupons", function () {
         )
 
       })
+
+      it('should test if batchTransfer reverts when minting is complete but deposit adsress is not set', async function () {
+         await coupons.selfSafeMint(50)
+        await assertThrowsMessage(
+            coupons.batchTransfer(30),
+            'transfer to the zero address'
+        )
+        })
+
+        it('should test if batchTransfer works when minting is complete and deposit adsress is not set', async function () {
+            await coupons.selfSafeMint(50)
+            await coupons.setDepositAddress(buyer1.address)
+            await coupons.batchTransfer(30)
+            expect(await coupons.balanceOf(buyer1.address)).equal(30)
+           })
+
+
+
     })
 })
