@@ -1,7 +1,12 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+// @dev After deploying the contract, transfer 888 * 15000 * 10**18 SYNR
+// to the contract (do not use safeTransfer) and call enable.
 
 contract ClaimSYNR is Ownable {
     mapping(uint32 => bool) public claimed;
