@@ -144,26 +144,25 @@ describe("SynCityPasses", function () {
   })
   describe.only('#ClaimSYNR', async function () {
 
+    let totalAmount = ethers.BigNumber.from(15000 + '0'.repeat(18)).mul(888)
+
     beforeEach(async function () {
       await initAndDeploy()
-      console.log(ethers.BigNumber.from(15000 + '0'.repeat(18)).mul(888).toString()) 
       ClaimSYNR = await ethers.getContractFactory("ClaimSYNR")
-      SYNRtoken = await ethers.getContractFactory("ERC20")
-      SYNR = await SYNRtoken.deploy("SYNR", "SYNR")
+      SYNRtoken = await ethers.getContractFactory("SynrMock")
+      SYNR = await SYNRtoken.deploy()
       claim = await ClaimSYNR.deploy(nftAddress , SYNR.address)
-
-      
     })
 
     it.only("should allow enable if Contract has required SYNR", async function () {
 
-      SYNR.mint(claim.address, 888* 5)
+      SYNR.mint(claim.address, totalAmount)
       claim.enable()
       expect(await claim.enabled()).to.be.true
 
     })
 
-    it('should revert if try enable with insuficcient SYNR', async function () {
+    it('should revert if try enable with insufficient SYNR', async function () {
 
       await assertThrowsMessage(
         claim.enable(),
@@ -181,7 +180,7 @@ describe("SynCityPasses", function () {
 
       SYNR.mint(claim.address, 888 * 5)
       claim.enable()
-     
+
       expect(await SYNR.balanceOf(communityMenber1.address)).equal(0)
       await claim.connect(communityMenber1).claim(9)
       expect(await SYNR.balanceOf(communityMenber1.address)).equal(5)

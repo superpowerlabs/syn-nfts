@@ -13,9 +13,7 @@ contract ClaimSYNR is Ownable {
     ERC721 synPass;
     ERC20 synr;
     bool public enabled;
-   uint256 public award = 15000 * 10**18;
-    //uint256 public award = 5;
-
+    uint256 public award = 15000 * 10**18;
 
     constructor(address _synPass, address _synr) {
         synPass = ERC721(_synPass);
