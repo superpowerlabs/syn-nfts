@@ -145,6 +145,7 @@ describe("SynCityPasses", function () {
   describe.only('#ClaimSYNR', async function () {
 
     let totalAmount = ethers.BigNumber.from(15000 + '0'.repeat(18)).mul(888)
+    let rewardAmount = ethers.BigNumber.from(15000 + '0'.repeat(18))
 
     beforeEach(async function () {
       await initAndDeploy()
@@ -154,7 +155,7 @@ describe("SynCityPasses", function () {
       claim = await ClaimSYNR.deploy(nftAddress , SYNR.address)
     })
 
-    it.only("should allow enable if Contract has required SYNR", async function () {
+    it("should allow enable if Contract has required SYNR", async function () {
 
       SYNR.mint(claim.address, totalAmount)
       claim.enable()
@@ -178,12 +179,14 @@ describe("SynCityPasses", function () {
       await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
 
 
-      SYNR.mint(claim.address, 888 * 5)
+      SYNR.mint(claim.address, totalAmount)
       claim.enable()
 
       expect(await SYNR.balanceOf(communityMenber1.address)).equal(0)
+     
       await claim.connect(communityMenber1).claim(9)
-      expect(await SYNR.balanceOf(communityMenber1.address)).equal(5)
+     
+      expect(await SYNR.balanceOf(communityMenber1.address)).equal(rewardAmount)
 
     })
 
@@ -195,10 +198,8 @@ describe("SynCityPasses", function () {
       await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
 
 
-      SYNR.mint(claim.address, 888 * 5)
-      console.log(ethers.BigNumber.from(normalize(15000)).mul(888).toString())
-
-      SYNR.mint(ethers.BigNumber.from(normalize(15000)).mul(888))
+      SYNR.mint(claim.address, totalAmount)
+  
       await assertThrowsMessage(
         claim.connect(communityMenber1).claim(9),
            'Contract not enabled'
@@ -212,9 +213,7 @@ describe("SynCityPasses", function () {
       const signature = await signPackedData(hash)
       await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
 
-      //SYNR.mint(claim.address, 888 * 5)
-      SYNR.mint(ethers.BigNumber.from(normalize(15000)).mul(888))
-
+      SYNR.mint(claim.address, totalAmount)
       claim.enable()
 
       await assertThrowsMessage(
