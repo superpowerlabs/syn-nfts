@@ -142,5 +142,86 @@ describe("SynCityPasses", function () {
     })
 
   })
+  describe.only('#ClaimSYNR', async function () {
+
+    let totalAmount = ethers.BigNumber.from(15000 + '0'.repeat(18)).mul(888)
+    let rewardAmount = ethers.BigNumber.from(15000 + '0'.repeat(18))
+
+    beforeEach(async function () {
+      await initAndDeploy()
+      ClaimSYNR = await ethers.getContractFactory("ClaimSYNR")
+      SYNRtoken = await ethers.getContractFactory("SynrMock")
+      SYNR = await SYNRtoken.deploy()
+      claim = await ClaimSYNR.deploy(nftAddress , SYNR.address)
+    })
+
+    it("should allow enable if Contract has required SYNR", async function () {
+
+      SYNR.mint(claim.address, totalAmount)
+      claim.enable()
+      expect(await claim.enabled()).to.be.true
+
+    })
+
+    it('should revert if try enable with insufficient SYNR', async function () {
+
+      await assertThrowsMessage(
+        claim.enable(),
+          'Not enough SYNR'
+      )
+    })
+
+    it("should allow Claim ", async function () {
+
+      const authCode = ethers.utils.id('a' + Math.random())
+      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      const signature = await signPackedData(hash)
+      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+
+
+      SYNR.mint(claim.address, totalAmount)
+      claim.enable()
+
+      expect(await SYNR.balanceOf(communityMenber1.address)).equal(0)
+     
+      await claim.connect(communityMenber1).claim(9)
+     
+      expect(await SYNR.balanceOf(communityMenber1.address)).equal(rewardAmount)
+
+    })
+
+    it("should revert if  Claim without enable", async function () {
+
+      const authCode = ethers.utils.id('a' + Math.random())
+      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      const signature = await signPackedData(hash)
+      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+
+
+      SYNR.mint(claim.address, totalAmount)
+  
+      await assertThrowsMessage(
+        claim.connect(communityMenber1).claim(9),
+           'Contract not enabled'
+       )
+     })
+
+
+    it('should revert if try claim without being owner', async function () {
+      const authCode = ethers.utils.id('a' + Math.random())
+      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      const signature = await signPackedData(hash)
+      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+
+      SYNR.mint(claim.address, totalAmount)
+      claim.enable()
+
+      await assertThrowsMessage(
+       claim.connect(communityMenber2).claim(9),
+          'Only onwer can claim'
+      )
+    })
+
+  })
 
 })
