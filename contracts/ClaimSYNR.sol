@@ -14,6 +14,7 @@ contract ClaimSYNR is Ownable {
     ERC20 synr;
     bool public enabled;
     uint256 public award = 15000 * 10**18;
+    uint256 startBlock;
 
     constructor(address _synPass, address _synr) {
         synPass = ERC721(_synPass);
@@ -21,8 +22,10 @@ contract ClaimSYNR is Ownable {
     }
 
     // Needs to transfer enough fund to contract before enabling.
-    function enable() external onlyOwner {
+    function enable(uint256 _startBlock) external onlyOwner {
         require(synr.balanceOf(address(this)) == award * 888, "Not enough SYNR");
+        require(_startBlock >= block.number, "Needs to be in the future");
+        startBlock = _startBlock;
         enabled = true;
     }
 
@@ -30,6 +33,7 @@ contract ClaimSYNR is Ownable {
         require(enabled, "Contract not enabled");
         require(passId <= 888, "Invalid pass id");
         require(!claimed[passId], "Already claimed");
+        require(block.number >= startBlock, "Not started");
         require(synPass.ownerOf(uint256(passId)) == msg.sender, "Only onwer can claim");
         synr.transfer(msg.sender, award);
         claimed[passId] = true;
