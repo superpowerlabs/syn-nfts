@@ -36,6 +36,10 @@ const Helpers = {
     return (await this.ethers.provider.getBlock()).timestamp
   },
 
+  async getBlockNumber() {
+    return (await this.ethers.provider.getBlock()).number
+  },
+
   addr0: '0x0000000000000000000000000000000000000000',
 
   async increaseBlockTimestampBy(offset) {
