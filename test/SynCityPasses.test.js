@@ -1,12 +1,16 @@
 const {expect, assert} = require("chai")
 
-const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, increaseBlockTimestampBy} = require('./helpers')
+const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, getBlockNumber, increaseBlockTimestampBy} = require('./helpers')
 
 // tests to be fixed
 
 describe("SynCityPasses", function () {
 
   let SynCityPasses
+  let ClaimSYNR
+  let claim
+  let SynrMock
+  let SYNR
   let nft
   let nftAddress
 
@@ -27,11 +31,13 @@ describe("SynCityPasses", function () {
       communityMenber1, communityMenber2, communityMenber3, communityMenber4, communityMenber5, communityMenber6,
       collector1, collector2
     ] = await ethers.getSigners()
+    ClaimSYNR = await ethers.getContractFactory("ClaimSYNR")
+    SynrMock = await ethers.getContractFactory("SynrMock")
+    SynCityPasses = await ethers.getContractFactory("SynCityPasses")
     initEthers(ethers)
   })
 
   async function initAndDeploy() {
-    SynCityPasses = await ethers.getContractFactory("SynCityPasses")
     nft = await SynCityPasses.deploy(validator.address)
     await nft.deployed()
     nftAddress = nft.address
@@ -47,12 +53,9 @@ describe("SynCityPasses", function () {
       await initAndDeploy()
     })
 
-
     it("should return the SynCityPasses address", async function () {
       await expect(await nft.validator()).to.equal(validator.address)
     })
-
-
   })
 
   describe('#claimFreeToken', async function () {
@@ -142,23 +145,27 @@ describe("SynCityPasses", function () {
     })
 
   })
-  describe.only('#ClaimSYNR', async function () {
+
+  describe('#ClaimSYNR', async function () {
 
     let totalAmount = ethers.BigNumber.from(15000 + '0'.repeat(18)).mul(888)
     let rewardAmount = ethers.BigNumber.from(15000 + '0'.repeat(18))
 
     beforeEach(async function () {
       await initAndDeploy()
-      ClaimSYNR = await ethers.getContractFactory("ClaimSYNR")
-      SYNRtoken = await ethers.getContractFactory("SynrMock")
-      SYNR = await SYNRtoken.deploy()
+      SYNR = await SynrMock.deploy()
       claim = await ClaimSYNR.deploy(nftAddress , SYNR.address)
     })
+
+    async function getBlockNumberInTheFuture() {
+      return (await getBlockNumber()) + 3
+    }
 
     it("should allow enable if Contract has required SYNR", async function () {
 
       SYNR.mint(claim.address, totalAmount)
-      claim.enable()
+      await claim.enable(await getBlockNumberInTheFuture())
+      await increaseBlockTimestampBy(1000)
       expect(await claim.enabled()).to.be.true
 
     })
@@ -166,7 +173,7 @@ describe("SynCityPasses", function () {
     it('should revert if try enable with insufficient SYNR', async function () {
 
       await assertThrowsMessage(
-        claim.enable(),
+        claim.enable(await getBlockNumber()),
           'Not enough SYNR'
       )
     })
@@ -180,12 +187,13 @@ describe("SynCityPasses", function () {
 
 
       SYNR.mint(claim.address, totalAmount)
-      claim.enable()
+      await claim.enable(await getBlockNumberInTheFuture())
+      await increaseBlockTimestampBy(1000)
 
       expect(await SYNR.balanceOf(communityMenber1.address)).equal(0)
-     
+
       await claim.connect(communityMenber1).claim(9)
-     
+
       expect(await SYNR.balanceOf(communityMenber1.address)).equal(rewardAmount)
 
     })
@@ -196,10 +204,8 @@ describe("SynCityPasses", function () {
       const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
       const signature = await signPackedData(hash)
       await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
-
-
       SYNR.mint(claim.address, totalAmount)
-  
+
       await assertThrowsMessage(
         claim.connect(communityMenber1).claim(9),
            'Contract not enabled'
@@ -214,7 +220,8 @@ describe("SynCityPasses", function () {
       await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
 
       SYNR.mint(claim.address, totalAmount)
-      claim.enable()
+      await claim.enable(await getBlockNumberInTheFuture())
+      await increaseBlockTimestampBy(1000)
 
       await assertThrowsMessage(
        claim.connect(communityMenber2).claim(9),
