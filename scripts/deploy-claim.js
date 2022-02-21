@@ -30,42 +30,34 @@ async function main() {
   const isLocalNode = /1337$/.test(chainId)
   const [deployer] = await ethers.getSigners()
 
+  if (!deployed[chainId]) {
+    deployed[chainId] = {}
+  }
+
   if (!deployed[chainId].SynCityPasses) {
     console.error('It looks like SynCityPasses has not been deployed on this network')
     process.exit(1)
   }
 
-  const PassesABI = require('../artifacts/contracts/SynCityPasses.sol/SynCityPasses.json').abi
-
-  const passes = new ethers.Contract(deployed[chainId].SynCityPasses, PassesABI, deployer)
+  const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
+  const passes = SynCityPasses.attach(deployed[chainId].SynCityPasses)
 
   console.log("Deploying contracts with the account:", deployer.address)
-
   console.log('Current chain ID', await currentChainId())
-
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    const validator = isLocalNode
-      ? '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' // hardhat #4
-      : process.env.VALIDATOR
-
-  assert.isTrue(validator.length === 42)
-
   const ClaimSYNR = await ethers.getContractFactory("ClaimSYNR")
-  const SYNRtoken = await ethers.getContractFactory("SynrMock")
+  const SynrMock = await ethers.getContractFactory("SynrMock")
 
-  SYNR = await SYNRtoken.deploy()
+  const SYNR = await SynrMock.deploy()
   await SYNR.deployed()
-  claim = await ClaimSYNR.deploy(passes.address , SYNR.address)
+  const claim = await ClaimSYNR.deploy(passes.address , SYNR.address)
   await claim.deployed()
 
   const addresses = {
     ClaimSYNR: claim.address
   }
 
-  if (!deployed[chainId]) {
-    deployed[chainId] = {}
-  }
   deployed[chainId] = Object.assign(deployed[chainId], addresses)
 
   console.log(deployed)
