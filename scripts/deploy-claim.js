@@ -9,7 +9,7 @@ const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
 const requireOrMock = require('require-or-mock')
-const {signPackedData} = require('../test/helpers');
+const {signPackedData, getBlockNumberInTheFuture} = require('../test/helpers');
 const ethers = hre.ethers
 
 const deployed = requireOrMock('export/deployed.json')
@@ -72,15 +72,28 @@ async function main() {
     let authCode = ethers.utils.id('a' + Math.random())
     let hash = await passes.encodeForSignature(holder.address, authCode, 0)
     let signature = await signPackedData(hash)
-    await passes.connect(holder).claimFreeToken(authCode, 0, signature)
+    await (await passes.connect(holder).claimFreeToken(authCode, 0, signature)).wait()
   }
 
 
   if (isLocalNode) {
 
-    await claimAPass(holder1)
-    await claimAPass(holder2)
-    await claimAPass(holder3)
+    let totalAmount = ethers.BigNumber.from(15000 + '0'.repeat(18)).mul(888)
+    await SYNR.mint(claim.address, totalAmount)
+    const blockNumber = (await this.ethers.provider.getBlock()).number
+    await claim.enable(blockNumber + 2)
+
+    try {
+      await claimAPass(holder1)
+      await claimAPass(holder2)
+      await claimAPass(holder3)
+      await claimAPass(holder4)
+      const nextTokenId = await passes.nextTokenId()
+      await passes.connect(holder4).transferFrom(holder4.address, holder2.address, nextTokenId - 1)
+    } catch (e) {
+      console.log(e)
+      // tokens already minted
+    }
 
   }
 
