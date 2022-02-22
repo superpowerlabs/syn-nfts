@@ -37,10 +37,11 @@ module.exports = {
   networks: {
     hardhat: {
       blockGasLimit: 10000000,
+      chainId:1337
     },
     localhost: {
       url: "http://localhost:8545",
-      // chainId: 1337,
+       //chainId: 1337,
     },
     ethereum: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY || ''}`,
