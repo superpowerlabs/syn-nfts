@@ -4,11 +4,12 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 require('dotenv').config()
-const {assert} = require("chai")
+const {assert, expect} = require("chai")
 const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
 const requireOrMock = require('require-or-mock')
+const {signPackedData} = require('../test/helpers');
 const ethers = hre.ethers
 
 const deployed = requireOrMock('export/deployed.json')
@@ -28,7 +29,7 @@ async function main() {
 
   const chainId = await currentChainId()
   const isLocalNode = /1337$/.test(chainId)
-  const [deployer] = await ethers.getSigners()
+  const [deployer, holder1, holder2, holder3, validator, holder4] = await ethers.getSigners()
 
   if (!deployed[chainId]) {
     deployed[chainId] = {}
@@ -51,11 +52,12 @@ async function main() {
 
   const SYNR = await SynrMock.deploy()
   await SYNR.deployed()
-  const claim = await ClaimSYNR.deploy(passes.address , SYNR.address)
+  const claim = await ClaimSYNR.deploy(passes.address, SYNR.address)
   await claim.deployed()
 
   const addresses = {
-    ClaimSYNR: claim.address
+    ClaimSYNR: claim.address,
+    SynrMock: SYNR.address
   }
 
   deployed[chainId] = Object.assign(deployed[chainId], addresses)
@@ -65,6 +67,23 @@ async function main() {
   const deployedJson = path.resolve(__dirname, '../export/deployed.json')
   await fs.ensureDir(path.dirname(deployedJson))
   await fs.writeFile(deployedJson, JSON.stringify(deployed, null, 2))
+
+  async function claimAPass(holder) {
+    let authCode = ethers.utils.id('a' + Math.random())
+    let hash = await passes.encodeForSignature(holder.address, authCode, 0)
+    let signature = await signPackedData(hash)
+    await passes.connect(holder).claimFreeToken(authCode, 0, signature)
+  }
+
+
+  if (isLocalNode) {
+
+    await claimAPass(holder1)
+    await claimAPass(holder2)
+    await claimAPass(holder3)
+
+  }
+
 
 }
 

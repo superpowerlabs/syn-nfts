@@ -23,6 +23,10 @@ async function main() {
     let json = require(source)
     ABIs.contracts[name] = json.abi
   }
+  let source = path.resolve(__dirname, `../artifacts/contracts/mocks/SynrMock.sol/SynrMock.json`)
+  let json = require(source)
+  ABIs.contracts.SynrMock = json.abi
+
   await fs.writeFile(path.resolve(__dirname, '../export/ABIs.json'), JSON.stringify(ABIs, null, 2))
 }
 
