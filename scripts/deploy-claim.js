@@ -4,11 +4,12 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 require('dotenv').config()
-const {assert} = require("chai")
+const {assert, expect} = require("chai")
 const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
 const requireOrMock = require('require-or-mock')
+const {signPackedData} = require('../test/helpers');
 const ethers = hre.ethers
 
 const deployed = requireOrMock('export/deployed.json')
@@ -28,44 +29,37 @@ async function main() {
 
   const chainId = await currentChainId()
   const isLocalNode = /1337$/.test(chainId)
-  const [deployer] = await ethers.getSigners()
+  const [deployer, holder1, holder2, holder3, validator, holder4] = await ethers.getSigners()
+
+  if (!deployed[chainId]) {
+    deployed[chainId] = {}
+  }
 
   if (!deployed[chainId].SynCityPasses) {
     console.error('It looks like SynCityPasses has not been deployed on this network')
     process.exit(1)
   }
 
-  const PassesABI = require('../artifacts/contracts/SynCityPasses.sol/SynCityPasses.json').abi
-
-  const passes = new ethers.Contract(deployed[chainId].SynCityPasses, PassesABI, deployer)
+  const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
+  const passes = SynCityPasses.attach(deployed[chainId].SynCityPasses)
 
   console.log("Deploying contracts with the account:", deployer.address)
-
   console.log('Current chain ID', await currentChainId())
-
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    const validator = isLocalNode
-      ? '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65' // hardhat #4
-      : process.env.VALIDATOR
-
-  assert.isTrue(validator.length === 42)
-
   const ClaimSYNR = await ethers.getContractFactory("ClaimSYNR")
-  const SYNRtoken = await ethers.getContractFactory("SynrMock")
+  const SynrMock = await ethers.getContractFactory("SynrMock")
 
-  SYNR = await SYNRtoken.deploy()
+  const SYNR = await SynrMock.deploy()
   await SYNR.deployed()
-  claim = await ClaimSYNR.deploy(passes.address , SYNR.address)
+  const claim = await ClaimSYNR.deploy(passes.address, SYNR.address)
   await claim.deployed()
 
   const addresses = {
-    ClaimSYNR: claim.address
+    ClaimSYNR: claim.address,
+    SynrMock: SYNR.address
   }
 
-  if (!deployed[chainId]) {
-    deployed[chainId] = {}
-  }
   deployed[chainId] = Object.assign(deployed[chainId], addresses)
 
   console.log(deployed)
@@ -73,6 +67,23 @@ async function main() {
   const deployedJson = path.resolve(__dirname, '../export/deployed.json')
   await fs.ensureDir(path.dirname(deployedJson))
   await fs.writeFile(deployedJson, JSON.stringify(deployed, null, 2))
+
+  async function claimAPass(holder) {
+    let authCode = ethers.utils.id('a' + Math.random())
+    let hash = await passes.encodeForSignature(holder.address, authCode, 0)
+    let signature = await signPackedData(hash)
+    await passes.connect(holder).claimFreeToken(authCode, 0, signature)
+  }
+
+
+  if (isLocalNode) {
+
+    await claimAPass(holder1)
+    await claimAPass(holder2)
+    await claimAPass(holder3)
+
+  }
+
 
 }
 
