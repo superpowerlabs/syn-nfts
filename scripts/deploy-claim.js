@@ -9,8 +9,9 @@ const hre = require("hardhat");
 const fs = require('fs-extra')
 const path = require('path')
 const requireOrMock = require('require-or-mock')
-const {signPackedData} = require('../test/helpers');
+const {signPackedData, getBlockNumber} = require('../test/helpers');
 const ethers = hre.ethers
+
 
 const deployed = requireOrMock('export/deployed.json')
 
@@ -40,6 +41,10 @@ async function main() {
     process.exit(1)
   }
 
+  async function getBlockNumberInTheFuture() {
+    return (await getBlockNumber()) + 1
+  }
+
   const SynCityPasses = await ethers.getContractFactory("SynCityPasses")
   const passes = SynCityPasses.attach(deployed[chainId].SynCityPasses)
 
@@ -52,8 +57,16 @@ async function main() {
 
   const SYNR = await SynrMock.deploy()
   await SYNR.deployed()
+
   const claim = await ClaimSYNR.deploy(passes.address, SYNR.address)
   await claim.deployed()
+
+  let totalAmount = ethers.BigNumber.from(15000 + '0'.repeat(18)).mul(888)
+  await SYNR.mint(claim.address, totalAmount)
+  console.log(await claim.enabled())
+  await claim.enable(await getBlockNumberInTheFuture())
+  console.log(await claim.enabled())
+
 
   const addresses = {
     ClaimSYNR: claim.address,
