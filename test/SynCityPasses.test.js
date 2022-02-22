@@ -19,7 +19,7 @@ describe("SynCityPasses", function () {
       operator,
       validator,
       buyer1, buyer2,
-      communityMenber1, communityMenber2, communityMenber3, communityMenber4, communityMenber5, communityMenber6,
+      member1, member2, member3, member4, member5, member6,
       collector1, collector2
 
   before(async function () {
@@ -28,7 +28,7 @@ describe("SynCityPasses", function () {
       operator,
       buyer1, buyer2,
       validator,
-      communityMenber1, communityMenber2, communityMenber3, communityMenber4, communityMenber5, communityMenber6,
+      member1, member2, member3, member4, member5, member6,
       collector1, collector2
     ] = await ethers.getSigners()
     ClaimSYNR = await ethers.getContractFactory("ClaimSYNR")
@@ -64,18 +64,18 @@ describe("SynCityPasses", function () {
       await initAndDeploy()
     })
 
-    it("should communityMenber1 mint a free token", async function () {
+    it("should member1 mint a free token", async function () {
 
       const authCode = ethers.utils.id('a' + Math.random())
 
-      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      const hash = await nft.encodeForSignature(member1.address, authCode, 0)
       const signature = await signPackedData(hash)
 
-      await expect(await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature))
+      await expect(await nft.connect(member1).claimFreeToken(authCode, 0, signature))
           .to.emit(nft, 'Transfer')
-          .withArgs(addr0, communityMenber1.address, 9)
+          .withArgs(addr0, member1.address, 9)
 
-      assert.equal(await nft.usedCodes(authCode), communityMenber1.address)
+      assert.equal(await nft.usedCodes(authCode), member1.address)
 
       const remaining = await nft.getRemaining(0)
       assert.equal(remaining, 199)
@@ -86,17 +86,17 @@ describe("SynCityPasses", function () {
 
       let authCode = ethers.utils.id('a' + Math.random())
 
-      let hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      let hash = await nft.encodeForSignature(member1.address, authCode, 0)
       let signature = await signPackedData(hash)
 
-      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+      await nft.connect(member1).claimFreeToken(authCode, 0, signature)
 
       authCode = ethers.utils.id('b' + Math.random())
-      hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      hash = await nft.encodeForSignature(member1.address, authCode, 0)
       signature = await signPackedData(hash)
 
       await assertThrowsMessage(
-          nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
+          nft.connect(member1).claimFreeToken(authCode, 0, signature),
           'one pass per wallet'
       )
 
@@ -106,13 +106,13 @@ describe("SynCityPasses", function () {
 
       let authCode = ethers.utils.id('a' + Math.random())
 
-      let hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      let hash = await nft.encodeForSignature(member1.address, authCode, 0)
       let signature = await signPackedData(hash)
 
-      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+      await nft.connect(member1).claimFreeToken(authCode, 0, signature)
 
       await assertThrowsMessage(
-          nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature),
+          nft.connect(member1).claimFreeToken(authCode, 0, signature),
           'authCode already used'
       )
 
@@ -126,20 +126,52 @@ describe("SynCityPasses", function () {
       await initAndDeploy()
     })
 
-    it("should give a token to communityMember1", async function () {
+    it("should give a token to member1", async function () {
 
       const authCode = ethers.utils.id('a' + Math.random())
 
-      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 4)
+      const hash = await nft.encodeForSignature(member1.address, authCode, 4)
       const signature = await signPackedData(hash)
 
-      await expect(await nft.connect(operator).giveawayToken(communityMenber1.address, authCode, signature))
+      await expect(await nft.connect(operator).giveawayToken(member1.address, authCode, signature))
           .to.emit(nft, 'Transfer')
-          .withArgs(addr0, communityMenber1.address, 9)
+          .withArgs(addr0, member1.address, 9)
 
-      assert.equal(await nft.usedCodes(authCode), communityMenber1.address)
+      assert.equal(await nft.usedCodes(authCode), member1.address)
 
       const remaining = await nft.getRemaining(4)
+      assert.equal(remaining, 79)
+
+    })
+
+    it("should give a token to member2 after other have been distributed", async function () {
+
+      let authCode = ethers.utils.id('a' + Math.random())
+
+      let hash = await nft.encodeForSignature(member1.address, authCode, 0)
+      let signature = await signPackedData(hash)
+
+      await expect(await nft.connect(member1).claimFreeToken(authCode, 0, signature))
+          .to.emit(nft, 'Transfer')
+          .withArgs(addr0, member1.address, 9)
+
+      assert.equal(await nft.usedCodes(authCode), member1.address)
+
+      let remaining = await nft.getRemaining(0)
+      assert.equal(remaining, 199)
+
+      authCode = ethers.utils.id('a' + Math.random())
+
+      hash = await nft.encodeForSignature(member2.address, authCode, 4)
+      signature = await signPackedData(hash)
+
+      await expect(await nft.connect(operator).giveawayToken(member2.address, authCode, signature))
+          .to.emit(nft, 'Transfer')
+          .withArgs(addr0, member2.address, 10)
+
+      assert.equal(await nft.usedCodes(authCode), member2.address)
+
+      remaining = await nft.getRemaining(4)
       assert.equal(remaining, 79)
 
     })
@@ -181,33 +213,33 @@ describe("SynCityPasses", function () {
     it("should allow Claim ", async function () {
 
       const authCode = ethers.utils.id('a' + Math.random())
-      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      const hash = await nft.encodeForSignature(member1.address, authCode, 0)
       const signature = await signPackedData(hash)
-      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+      await nft.connect(member1).claimFreeToken(authCode, 0, signature)
 
 
       SYNR.mint(claim.address, totalAmount)
       await claim.enable(await getBlockNumberInTheFuture())
       await increaseBlockTimestampBy(1000)
 
-      expect(await SYNR.balanceOf(communityMenber1.address)).equal(0)
+      expect(await SYNR.balanceOf(member1.address)).equal(0)
 
-      await claim.connect(communityMenber1).claim(9)
+      await claim.connect(member1).claim(9)
 
-      expect(await SYNR.balanceOf(communityMenber1.address)).equal(rewardAmount)
+      expect(await SYNR.balanceOf(member1.address)).equal(rewardAmount)
 
     })
 
     it("should revert if  Claim without enable", async function () {
 
       const authCode = ethers.utils.id('a' + Math.random())
-      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      const hash = await nft.encodeForSignature(member1.address, authCode, 0)
       const signature = await signPackedData(hash)
-      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+      await nft.connect(member1).claimFreeToken(authCode, 0, signature)
       SYNR.mint(claim.address, totalAmount)
 
       await assertThrowsMessage(
-        claim.connect(communityMenber1).claim(9),
+        claim.connect(member1).claim(9),
            'Contract not enabled'
        )
      })
@@ -215,16 +247,16 @@ describe("SynCityPasses", function () {
 
     it('should revert if try claim without being owner', async function () {
       const authCode = ethers.utils.id('a' + Math.random())
-      const hash = await nft.encodeForSignature(communityMenber1.address, authCode, 0)
+      const hash = await nft.encodeForSignature(member1.address, authCode, 0)
       const signature = await signPackedData(hash)
-      await nft.connect(communityMenber1).claimFreeToken(authCode, 0, signature)
+      await nft.connect(member1).claimFreeToken(authCode, 0, signature)
 
       SYNR.mint(claim.address, totalAmount)
       await claim.enable(await getBlockNumberInTheFuture())
       await increaseBlockTimestampBy(1000)
 
       await assertThrowsMessage(
-       claim.connect(communityMenber2).claim(9),
+       claim.connect(member2).claim(9),
           'Only onwer can claim'
       )
     })
