@@ -33,6 +33,10 @@ async function main() {
       deployer.address
   );
 
+  const network = chainId === 1 ? 'ethereum'
+      : chainId === 42 ? 'kovan'
+          : 'localhost'
+
   console.log('Current chain ID', await currentChainId())
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
@@ -68,6 +72,16 @@ async function main() {
   const deployedJson = path.resolve(__dirname, '../export/deployed.json')
   await fs.ensureDir(path.dirname(deployedJson))
   await fs.writeFile(deployedJson, JSON.stringify(deployed, null, 2))
+
+  console.log(`
+To verify the SYNR Pass source code:
+    
+  npx hardhat verify --show-stack-traces \\
+      --network ${network} \\
+      ${nft.address} \\
+      ${validator}
+
+`)
 
 }
 
