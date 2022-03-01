@@ -45,7 +45,7 @@ contract ClaimSYNR is Ownable {
         require(enabled(), "Contract not enabled");
         require(passId <= 888, "Invalid pass id");
         require(!claimed[passId], "Already claimed");
-        require(synPass.ownerOf(uint256(passId)) == msg.sender, "Only onwer can claim");
+        require(synPass.ownerOf(uint256(passId)) == msg.sender, "Only owner can claim");
         synr.transfer(msg.sender, award);
         claimed[passId] = true;
         if (!active) {

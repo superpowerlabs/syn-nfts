@@ -289,7 +289,7 @@ describe("SynCityPasses", function () {
 
       await assertThrowsMessage(
        claim.connect(member2).claim(9),
-          'Only onwer can claim'
+          'Only owner can claim'
       )
     })
 
