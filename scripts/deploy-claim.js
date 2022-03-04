@@ -113,7 +113,9 @@ To verify ClaimSYNR source code:
         const nextTokenId = await passes.nextTokenId()
         await passes.connect(holder4).transferFrom(holder4.address, holder2.address, nextTokenId - 1)
         await claimAPass(holder5)
+        await passes.connect(holder5).transferFrom(holder5.address, holder2.address, nextTokenId)
         await claimAPass(holder6)
+
       } catch (e) {
         console.log(e)
         // tokens already minted
