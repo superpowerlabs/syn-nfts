@@ -32,10 +32,20 @@ contract ClaimSYNR is Ownable {
     }
 
     function claim(uint32 passId) external {
+        _claim(passId);
+    }
+
+    function claimMany(uint32[] memory passIds) external {
+        for (uint i = 0; i< passIds.length; i++) {
+            _claim(passIds[i]);
+        }
+    }
+
+    function _claim(uint32 passId) internal {
         require(enabled(), "Contract not enabled");
         require(passId <= 888, "Invalid pass id");
         require(!claimed[passId], "Already claimed");
-        require(synPass.ownerOf(uint256(passId)) == msg.sender, "Only onwer can claim");
+        require(synPass.ownerOf(uint256(passId)) == msg.sender, "Only owner can claim");
         synr.transfer(msg.sender, award);
         claimed[passId] = true;
         if (!active) {

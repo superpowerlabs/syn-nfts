@@ -230,6 +230,38 @@ describe("SynCityPasses", function () {
 
     })
 
+    it("should allow multiple claims", async function () {
+
+      let authCode = ethers.utils.id('a' + Math.random())
+      let hash = await nft.encodeForSignature(member1.address, authCode, 0)
+      let signature = await signPackedData(hash)
+      await nft.connect(member1).claimFreeToken(authCode, 0, signature)
+
+      authCode = ethers.utils.id('a' + Math.random())
+      hash = await nft.encodeForSignature(member2.address, authCode, 0)
+      signature = await signPackedData(hash)
+      await nft.connect(member2).claimFreeToken(authCode, 0, signature)
+      await nft.connect(member2).transferFrom(member2.address, member1.address, 10)
+
+      authCode = ethers.utils.id('a' + Math.random())
+      hash = await nft.encodeForSignature(member3.address, authCode, 0)
+      signature = await signPackedData(hash)
+      await nft.connect(member3).claimFreeToken(authCode, 0, signature)
+      await nft.connect(member3).transferFrom(member3.address, member1.address, 11)
+
+
+      SYNR.mint(claim.address, totalAmount)
+      await claim.enable(await getBlockNumberInTheFuture())
+      await increaseBlockTimestampBy(1000)
+
+      expect(await SYNR.balanceOf(member1.address)).equal(0)
+
+      await claim.connect(member1).claimMany([9, 10, 11])
+
+      expect(await SYNR.balanceOf(member1.address)).equal(rewardAmount.mul(3))
+
+    })
+
     it("should revert if  Claim without enable", async function () {
 
       const authCode = ethers.utils.id('a' + Math.random())
@@ -257,7 +289,7 @@ describe("SynCityPasses", function () {
 
       await assertThrowsMessage(
        claim.connect(member2).claim(9),
-          'Only onwer can claim'
+          'Only owner can claim'
       )
     })
 
