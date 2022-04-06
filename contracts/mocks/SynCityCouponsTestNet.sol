@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
+// It differs from SynCityCoupons because there are no batch mint and transfer
+// they were necessary only for listing on Binance marketplace
 contract SynCityCouponsTestNet is ERC721, ERC721Enumerable, Ownable {
   using Address for address;
   uint256 public nextTokenId = 1;
