@@ -42,14 +42,14 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const SynCityCoupons = await ethers.getContractFactory("SynCityCouponsTestNet")
+  const SynCityCoupons = await ethers.getContractFactory("SynCityCouponsSimplified")
   const nft = await SynCityCoupons.deploy(8000)
   await nft.deployed()
 
   // await nft.setMarketplace(process.env.BINANCE_ADDRESS)
 
   const addresses = {
-    SynCityCouponsTestNet: nft.address
+    SynCityCouponsSimplified: nft.address
   }
 
   if (!deployed[chainId]) {
@@ -60,7 +60,7 @@ async function main() {
   console.log(deployed)
 
   console.log(`
-To verify SynCityCouponsTestNet source code:
+To verify SynCityCouponsSimplified source code:
     
   npx hardhat verify --show-stack-traces \\
       --network ${network} \\

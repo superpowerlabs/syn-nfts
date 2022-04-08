@@ -3,7 +3,7 @@ const {expect, assert} = require("chai")
 const {initEthers, assertThrowsMessage, signPackedData, getTimestamp, increaseBlockTimestampBy} = require('./helpers')
 
 
-describe("SynCityCouponsTestNet", function () {
+describe("SynCityCouponsSimplified", function () {
 
 
     let SynCityCoupons, coupons
@@ -14,7 +14,7 @@ describe("SynCityCouponsTestNet", function () {
     before(async function () {
         [owner, operator, buyer1, buyer2, validator, buyer3, buyer4, buyer5, marketplace] = await ethers.getSigners()
         initEthers(ethers)
-        SynCityCoupons = await ethers.getContractFactory("SynCityCouponsTestNet")
+        SynCityCoupons = await ethers.getContractFactory("SynCityCouponsSimplified")
       })
 
       async function initAndDeploy() {
